@@ -1,6 +1,11 @@
+import ApplicationListContainer from './containers/ApplicationListContainer';
 
 function App() {
-  return <h1>Hello frontend</h1>;
+  return (
+    <div className="App">
+      <ApplicationListContainer />
+    </div>
+  );
 }
 
 export default App
