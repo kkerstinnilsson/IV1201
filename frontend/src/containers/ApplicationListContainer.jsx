@@ -1,28 +1,36 @@
 import { useState } from 'react';
-import ApplicationList from '../presentation/components/ApplicationList';
+import ApplicationList from '../presentation/pages/ApplicationList';
+import { getAllApplications } from "../services/applicationService";
 
 /**
  * Container component for managing application list state
- * THIS IS A SIMPLE HARDCODED VERSION FOR TESTING
+ * Uses service layer for fetching data.
  */
 export default function ApplicationListContainer() {
-  const fakeApplications = [
-    { id: 1, firstName: 'Anna', lastName: 'Andersson', status: 'accepted' },
-    { id: 2, firstName: 'Erik', lastName: 'Svensson', status: 'unhandled' },
-    { id: 3, firstName: 'Maria', lastName: 'Johansson', status: 'rejected' },
-  ];
 
   const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleFetchApplications = () => {
-    setApplications(fakeApplications);
-  };
+  async function handleFetchApplications() {
+      setError(null);
+      setLoading(true);
+  
+      try {
+        const data = await getAllApplications();
+        setApplications(data);
+      } catch (err) {
+        setError(err?.message ?? "Failed to fetch applications");
+      } finally {
+        setLoading(false);
+      }
+    }
 
   return (
     <ApplicationList
       applications={applications}
-      loading={false}
-      error={null}
+      loading={loading}
+      error={error}
       onFetchApplications={handleFetchApplications}
     />
   );
