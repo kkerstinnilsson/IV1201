@@ -37,7 +37,7 @@ class RecruitementDAO {
     console.log("RecruitementDAO: getAllApplicants called");
     try {
       const result = await this.pool.query(
-        "SELECT person_id, name, surname FROM public.person WHERE role_id = 1"
+        "SELECT person_id, name, surname FROM public.person WHERE role_id = 2"
       );
 
       // Map database rows to frontend DTO
