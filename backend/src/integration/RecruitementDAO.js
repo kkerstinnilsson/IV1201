@@ -1,57 +1,57 @@
 /**
- * Recruitement Data Access Object
- * @requires module:pg
- * @requires module:dotenv
+ * @file RecruitementDAO.js
+ * @description Data Access Object for recruitment applicants
+ * @requires pg
+ * @requires dotenv
  */
-const { Pool } = require('pg');
-require('dotenv').config();
-/***
- * Class representing the Recruitement Data Access Object
- * @class 
+
+const { Pool } = require("pg");
+require("dotenv").config();
+
+/**
+ * Class representing the Recruitment DAO
  */
 class RecruitementDAO {
-    /**
-     * Creates an instance of RecruitementDAO and intializes 
-     * the database connection pool
-     * @constructor
-     */
-    constructor() {
-        /**
-         * The database connection pool
-         * Using env variables for configuration
-         * @type {Pool}
-         * @private
-         */
-        this.pool = new Pool({
-            user: process.env.DB_USER,
-            host: process.env.DB_HOST,
-            database: process.env.DB_NAME,
-            password: process.env.DB_PASSWORD,
-            port: process.env.DB_PORT,
-        });
+  /**
+   * Creates a new DAO and initializes the Postgres connection pool
+   */
+  constructor() {
+    console.log("RecruitementDAO: initializing database pool");
+
+    this.pool = new Pool({
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: process.env.DB_PORT,
+    });
+  }
+
+  /**
+   * Fetch all applicants with role_id = 1
+   * @async
+   * @returns {Promise<Array<{id: number, firstName: string, lastName: string, status: string}>>}
+   * @throws {Error} If a database error occurs
+   */
+  async getAllApplicants() {
+    console.log("RecruitementDAO: getAllApplicants called");
+    try {
+      const result = await this.pool.query(
+        "SELECT person_id, name, surname FROM public.person WHERE role_id = 2"
+      );
+
+      // Map database rows to frontend DTO
+      return result.rows.map((row) => ({
+        id: row.person_id,
+        firstName: row.name,
+        lastName: row.surname,
+        status: "unhandled",
+      }));
+    } catch (error) {
+      console.error("RecruitementDAO error:", error);
+      throw error;
     }
-    /**
-     * Fetches all applicants from the database
-     * Limited to applicants with role_id = 1, see SQL-query
-     * @async
-     * @returns {Promise<Array>} A promise that eventually will contain an array of applicant objects
-     * @throws {Error} If an error occurs during the database query
-     */
-    async getAllApplicants() {
-        try {
-            const result = await this.pool.query(
-                'SELECT name, surname, person_id FROM public.person WHERE role_id = 1'); 
-            return result.rows.map(row => ({
-                name: row.name,
-                lastName: row.surname,
-                person_id: row.person_id,
-                status: 'unhandled'
-            }));
-        } catch (error) {
-            console.error('Error in RecruitementDAO.getAllApplicants:', error);
-            throw error;
-        }
-    }
+  }
 }
 
 module.exports = RecruitementDAO;
