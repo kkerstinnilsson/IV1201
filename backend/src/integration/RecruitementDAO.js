@@ -1,8 +1,10 @@
 /**
  * Recruitement Data Access Object
  * @requires module:pg
+ * @requires module:dotenv
  */
 const { Pool } = require('pg');
+require('dotenv').config();
 /***
  * Class representing the Recruitement Data Access Object
  * @class 
@@ -16,15 +18,16 @@ class RecruitementDAO {
     constructor() {
         /**
          * The database connection pool
+         * Using env variables for configuration
          * @type {Pool}
          * @private
          */
         this.pool = new Pool({
-            user: 'username',
-            host: 'localhost',
-            database: 'recruitement',
-            password: 'password',
-            port: 5432,
+            user: process.env.DB_USER,
+            host: process.env.DB_HOST,
+            database: process.env.DB_NAME,
+            password: process.env.DB_PASSWORD,
+            port: process.env.DB_PORT,
         });
     }
     /**
