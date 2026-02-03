@@ -28,7 +28,11 @@ class RecruitementDAO {
   }
 
   /**
-   * Fetch all applicants with role_id = 1
+   * Fetch all applicants with role_id = 2 which are the applicants in the database
+   * 
+   * TODO: We need to implement an application table in the database to store status of 
+   * application. Currently bypassed by hardcoded status line.
+   * 
    * @async
    * @returns {Promise<Array<{id: number, firstName: string, lastName: string, status: string}>>}
    * @throws {Error} If a database error occurs
