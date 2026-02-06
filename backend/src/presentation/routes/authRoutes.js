@@ -1,0 +1,16 @@
+/**
+ * @file authRoutes.js
+ * @description Express routes for authentication endpoints.
+ */
+
+const express = require('express');
+const authController = require('../controllers/authController');
+const requireAuth = require('../middleware/requireAuth');
+
+const router = express.Router();
+
+router.post('/login', authController.login);
+router.post('/logout', authController.logout);
+router.get('/me', requireAuth, authController.me);
+
+module.exports = router;
