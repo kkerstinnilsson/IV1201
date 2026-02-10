@@ -26,4 +26,10 @@ dist-ssr
 *.sln
 *.sw?
 .history
+
+# AWS credentials
+.aws/
 iv1201-key.pem
+task-definition.json
+
+!task-definition.example.json
