@@ -9,7 +9,7 @@ const express = require("express");
 const cors = require("cors");
 const session = require('express-session');
 
-const applicationsController = require("./presentation/applicationsController");
+const applicationsController = require("./presentation/routes/applicationsRoutes");
 const authRoutes = require('./presentation/routes/authRoutes');
 
 const app = express();
@@ -51,7 +51,7 @@ app.get("/", (req, res) => {
  * Applications API
  * Routes prefixed with /applications
  */
-app.use("/applications", applicationsController);
+app.use("/applications", applicationsRoutes);
 
 
 /**
