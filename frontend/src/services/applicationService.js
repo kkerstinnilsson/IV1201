@@ -6,7 +6,15 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  * @throws {Error} If the request fails.
  */
 export async function getAllApplications() {
-  const response = await fetch(`${API_BASE_URL}/applications`);
-  if (!response.ok) throw new Error("Failed to fetch applications");
-  return response.json();
+  const response = await fetch(`${API_BASE_URL}/applications`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(data?.message ?? `Response status: ${response.status}`);
+  }
+  return data;
 }
