@@ -1,0 +1,2 @@
+#!/bin/bash
+echo ECS_CLUSTER=iv1201-cluster >> /etc/ecs/ecs.config
