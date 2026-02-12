@@ -14,11 +14,11 @@ const authRoutes = require('./presentation/routes/authRoutes');
 
 const app = express();
 
-// Enable CORS for frontend
-app.use(cors({
+// Define CORS options
+const corsOptions = {
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true,
-}));
+};
 
 // Enable JSON parsing
 app.use(express.json());
@@ -41,23 +41,23 @@ app.use(session({
 }));
 
 /**
- * Health check route
+ * Health check route - No CORS needed
  */
 app.get("/", (req, res) => {
   res.send("Hello backend");
 });
 
 /**
- * Applications API
+ * Applications API - With CORS
  * Routes prefixed with /applications
  */
-app.use("/applications", applicationsRoutes);
+app.use("/applications", cors(corsOptions), applicationsController);
 
 
 /**
- * Authentication API.
+ * Authentication API. - With CORS
  */
-app.use('/auth', authRoutes);
+app.use('/auth', cors(corsOptions), authRoutes);
 
 /**
  * Start the server
