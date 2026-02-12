@@ -1,0 +1,97 @@
+{
+  "family": "iv1201-task",
+  "networkMode": "bridge",
+  "containerDefinitions": [
+    {
+      "name": "postgres",
+      "image": "postgres:15",
+      "memory": 150,
+      "essential": true,
+      "environment": [
+        {
+          "name": "POSTGRES_DB",
+          "value": "recruitment"
+        },
+        {
+          "name": "POSTGRES_USER",
+          "value": "postgres"
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "value": "<REPLACE_WITH_DB_PASSWORD>"
+        }
+      ]
+    },
+    {
+      "name": "backend",
+      "image": "<YOUR_AWS_ACCOUNT_ID>.dkr.ecr.eu-north-1.amazonaws.com/iv1201-backend:latest",
+      "memory": 250,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "FRONTEND_URL",
+          "value": "http://<YOUR_EC2_PUBLIC_IP>"
+        },
+        {
+          "name": "DB_USER",
+          "value": "postgres"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "postgres"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "recruitment"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "value": "<REPLACE_WITH_DB_PASSWORD>"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "PORT",
+          "value": "3000"
+        },
+        {
+          "name": "SESSION_SECRET",
+          "value": "<REPLACE_WITH_CRYPTOGRAPHICALLY_SECURE_SECRET_64_CHARS>"
+        },
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        }
+      ],
+      "links": ["postgres"]
+    },
+    {
+      "name": "frontend",
+      "image": "<YOUR_AWS_ACCOUNT_ID>.dkr.ecr.eu-north-1.amazonaws.com/iv1201-frontend:latest",
+      "memory": 150,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "VITE_API_BASE_URL",
+          "value": "http://<YOUR_EC2_PUBLIC_IP>:3000"
+        }
+      ]
+    }
+  ]
+}

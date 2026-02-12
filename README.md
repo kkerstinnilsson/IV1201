@@ -15,12 +15,38 @@ npm run dev
 .gitkeep files are used as placeholders for empty directories and can be removed later.
 
 # Run with Docker
-Prerequisite: Install docker
-Then navigate to project root folder
+
+Prerequisite: Install Docker
+
+Then navigate to project root folder:
+```bash
 cd IV1201
+```
 
-To start docker containers use
-docker-compose up -d
+## Development (local coding)
 
-To power down containers use
+To start development containers:
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+To stop development containers:
+```bash
+docker-compose -f docker-compose.dev.yml down
+```
+
+Access the app at: http://localhost:5173
+
+## Production (testing production build locally)
+
+To start production containers:
+```bash
+docker-compose up --build
+```
+
+To stop production containers:
+```bash
 docker-compose down
+```
+
+Access the app at: http://localhost:80

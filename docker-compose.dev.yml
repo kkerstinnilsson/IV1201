@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:15
+    container_name: recruitment-db-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: recruitment
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d
+      - postgres-data-dev:/var/lib/postgresql/data
+      
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: recruitment-backend-dev
+    environment:
+      DB_USER: postgres
+      DB_HOST: db
+      DB_NAME: recruitment
+      DB_PASSWORD: postgres
+      DB_PORT: 5432
+      PORT: 3000
+      SESSION_SECRET: dev-secret-change-for-production
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - db
+      
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: recruitment-frontend-dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data-dev:

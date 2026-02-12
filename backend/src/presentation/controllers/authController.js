@@ -17,6 +17,7 @@ async function login(req, res) {
   }
 
   const user = await authService.login(username, password);
+  
   if (!user) {
     return res.status(401).json({ message: 'login failed' });
   }

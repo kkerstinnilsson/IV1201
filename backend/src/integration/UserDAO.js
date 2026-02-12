@@ -2,18 +2,18 @@
  * @file UserDAO.js
  * @description Data Access Object for users/authentication
  */
-
 const { Pool } = require("pg");
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: Number(process.env.DB_PORT),
-});
-
 class UserDAO {
+  constructor() {
+    this.pool = new Pool({
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: Number(process.env.DB_PORT),
+    });
+  }
 
   /**
    * Find a user by username.
@@ -22,7 +22,7 @@ class UserDAO {
    * @returns {Promise<{id:number, username:string, password:string, role:'recruiter'|'applicant'}|null>}
    */
   async findByUsername(username) {
-    const result = await pool.query(
+    const result = await this.pool.query(
       `
       SELECT 
         person_id,
@@ -34,17 +34,16 @@ class UserDAO {
       `,
       [username]
     );
-
+    
     if (result.rows.length === 0) {
       return null;
     }
-
+    
     const row = result.rows[0];
-
     return {
       id: row.person_id,
       username: row.username,
-      password: row.password, // plaintext for now
+      password: row.password,
       role: row.role_id === 1 ? "recruiter" : "applicant",
     };
   }
