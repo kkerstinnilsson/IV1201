@@ -6,9 +6,9 @@
 
 import { useEffect, useState } from 'react';
 import ApplicationListContainer from './containers/ApplicationListContainer';
+import ApplicantHomeContainer from './containers/ApplicantHomeContainer';
 import LoginContainer from './containers/LoginContainer';
 import { me, logout } from './services/authService';
-
 /**
  * Main application component.
  */
@@ -49,13 +49,20 @@ function App() {
   // Authenticated view
   return (
     <div className="App">
-        <p>
-          Logged in as {user.username} ({user.role}){' '}
-          <button onClick={handleLogout}>Logout</button>
+      <p>
+        Logged in as {user.username} ({user.role}){' '}
+        <button onClick={handleLogout}>Logout</button>
       </p>
-      <ApplicationListContainer />
+
+      {user.role === 'recruiter' && (
+        <ApplicationListContainer />
+      )}
+
+      {user.role === 'applicant' && (
+        <ApplicantHomeContainer user={user} />
+      )}
     </div>
   );
 }
 
-export default App
+export default App;
