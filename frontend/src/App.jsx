@@ -9,6 +9,9 @@ import ApplicationListContainer from './containers/ApplicationListContainer';
 import ApplicantHomeContainer from './containers/ApplicantHomeContainer';
 import LoginContainer from './containers/LoginContainer';
 import { me, logout } from './services/authService';
+import Layout from './presentation/components/Layout';
+
+
 /**
  * Main application component.
  */
@@ -41,27 +44,17 @@ function App() {
     return <p>Loading...</p>;
   }
 
-  // If no authenticated user exists, show login view
-  if (!user) {
-    return <LoginContainer onLoginSuccess={setUser} />;
-  }
-
-  // Authenticated view
   return (
-    <div className="App">
-      <p>
-        Logged in as {user.username} ({user.role}){' '}
-        <button onClick={handleLogout}>Logout</button>
-      </p>
 
-      {user.role === 'recruiter' && (
+    <Layout user={user} onLogout={handleLogout}>
+      {!user ? (
+        <LoginContainer onLoginSuccess={setUser} />
+      ) : user.role === 'recruiter' ? (
         <ApplicationListContainer />
-      )}
-
-      {user.role === 'applicant' && (
+      ) : (
         <ApplicantHomeContainer user={user} />
       )}
-    </div>
+    </Layout>
   );
 }
 
