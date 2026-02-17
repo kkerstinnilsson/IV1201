@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ApplicationListContainer from './containers/ApplicationListContainer';
 import ApplicantHomeContainer from './containers/ApplicantHomeContainer';
 import LoginContainer from './containers/LoginContainer';
@@ -45,15 +46,53 @@ function App() {
   }
 
   return (
-
     <Layout user={user} onLogout={handleLogout}>
-      {!user ? (
-        <LoginContainer onLoginSuccess={setUser} />
-      ) : user.role === 'recruiter' ? (
-        <ApplicationListContainer />
-      ) : (
-        <ApplicantHomeContainer user={user} />
-      )}
+      <Routes>
+        {/* Public */}
+        <Route
+          path="/login"
+          element={
+            user
+              ? <Navigate to={user.role === 'recruiter' ? '/recruiter' : '/applicant'} replace />
+              : <LoginContainer onLoginSuccess={setUser} />
+          }
+        />
+
+        {/* Recruiter */}
+        <Route
+          path="/recruiter"
+          element={
+            user?.role === 'recruiter'
+              ? <ApplicationListContainer />
+              : <Navigate to="/login" replace />
+          }
+        />
+
+        {/* Applicant */}
+        <Route
+          path="/applicant"
+          element={
+            user?.role === 'applicant'
+              ? <ApplicantHomeContainer user={user} />
+              : <Navigate to="/login" replace />
+          }
+        />
+
+        {/* Default */}
+        <Route
+          path="/"
+          element={
+            !user
+              ? <Navigate to="/login" replace />
+              : user.role === 'recruiter'
+              ? <Navigate to="/recruiter" replace />
+              : <Navigate to="/applicant" replace />
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Layout>
   );
 }

@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import ApplicationList from '../presentation/pages/ApplicationList';
-import { getAllApplications } from "../services/applicationService";
-
 /**
  * Container component for managing application list state
  * Uses service layer for fetching data.
  */
+
+import { useState } from 'react';
+import ApplicationList from '../presentation/pages/ApplicationsPage';
+import { getAllApplications } from "../services/applicationService";
+
 export default function ApplicationListContainer() {
 
   const [applications, setApplications] = useState([]);
