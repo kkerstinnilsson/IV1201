@@ -56,11 +56,6 @@ export default function ApplicantHomeContainer({ user }) {
 
   // Delete existing application
   const handleDeleteApplication = async () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete your existing application? This action cannot be undone."
-    );
-
-    if (!confirmDelete) return;
 
     try {
       await deleteApplication();
