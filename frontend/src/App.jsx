@@ -4,13 +4,12 @@
  * and conditionally renders views based on login status.
  */
 
-import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ApplicationListContainer from './containers/ApplicationListContainer';
 import ApplicantHomeContainer from './containers/ApplicantHomeContainer';
 import LoginContainer from './containers/LoginContainer';
-import { me, logout } from './services/authService';
 import Layout from './presentation/components/Layout';
+import useAuth from './hooks/useAuth';
 
 
 /**
@@ -18,27 +17,7 @@ import Layout from './presentation/components/Layout';
  */
 function App() {
 
-  const [user, setUser] = useState(null);
-  const [checkingSession, setCheckingSession] = useState(true);
-
-  /**
-   * Check for an existing authenticated session
-   * when the application first loads.
-   */
-  useEffect(() => {
-    me()
-      .then((data) => setUser(data.user))
-      .catch(() => setUser(null))
-      .finally(() => setCheckingSession(false));
-  }, []);
-
-  /**
-   * Log out the current user and clear local auth state.
-   */
-  async function handleLogout() {
-    await logout();
-    setUser(null);
-  }
+const { user, setUser, checkingSession, handleLogout } = useAuth();
 
   // While checking session, show loading state
   if (checkingSession) {
