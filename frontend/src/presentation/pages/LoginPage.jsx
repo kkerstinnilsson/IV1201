@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 /**
  * Presentation component for login.
  *
@@ -7,6 +5,9 @@ import { useState } from 'react';
  * @param {string|null} error - Error message if any
  * @param {(payload: {username: string, password: string}) => void} onLogin - Callback to login
  */
+
+import { useState } from 'react';
+
 export default function LoginPage({ loading, error, onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,37 +18,45 @@ export default function LoginPage({ loading, error, onLogin }) {
   }
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className="max-w-sm mx-auto">
+      <div className="container">
+        <h1 className="mb-4">Login</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>
-            Username:{' '}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <label>Username</label>
             <input
+              autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-          </label>
-        </div>
+          </div>
 
-        <div>
-          <label>
-            Password:{' '}
+          <div className="space-y-1">
+            <label>Password</label>
             <input
+              autoComplete="current-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-          </label>
-        </div>
+          </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in…' : 'Login'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full"
+          >
+            {loading ? 'Logging in…' : 'Login'}
+          </button>
+        </form>
 
-      {error && <p>Error: {error}</p>}
+        {error && (
+          <p className="error-box mt-4">
+            {error}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
