@@ -37,6 +37,10 @@ docker-compose -f docker-compose.dev.yml down
 
 Access the app at: http://localhost:5173
 
+## To migrate database locally start up local docker containers above then run
+
+docker exec -it recruitment-backend-dev npx sequelize-cli db:migrate
+
 ## Production (testing production build locally)
 
 To start production containers:
