@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import LoginPage from '../presentation/pages/LoginPage';
-import { login } from '../services/authService';
-
 /**
  * Container component for managing login state.
  * Uses service layer for authentication.
  */
+
+import { useState } from 'react';
+import LoginPage from '../presentation/pages/LoginPage';
+import { login } from '../services/authService';
+
 export default function LoginContainer({ onLoginSuccess }) {
     
   const [loading, setLoading] = useState(false);

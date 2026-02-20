@@ -13,15 +13,17 @@ export default function ApplicationList({
 }) {
   return (
     <div>
+      <div className="container">
       <h1>Applications</h1>
       
-      <button onClick={onFetchApplications}>
+      <button onClick={onFetchApplications}
+      className="btn-secondary mt-4 mb-4">
         List All Applications
       </button>
 
       {loading && <p>Loading applications...</p>}
       
-      {error && <p>Error: {error}</p>}
+      {error && <p className="error-box mt-4">Error: {error}</p>}
       
       {applications.length > 0 && (
         <table>
@@ -41,6 +43,7 @@ export default function ApplicationList({
           </tbody>
         </table>
       )}
+    </div>
     </div>
   );
 }
