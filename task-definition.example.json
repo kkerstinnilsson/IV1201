@@ -3,26 +3,6 @@
   "networkMode": "bridge",
   "containerDefinitions": [
     {
-      "name": "postgres",
-      "image": "postgres:15",
-      "memory": 150,
-      "essential": true,
-      "environment": [
-        {
-          "name": "POSTGRES_DB",
-          "value": "recruitment"
-        },
-        {
-          "name": "POSTGRES_USER",
-          "value": "postgres"
-        },
-        {
-          "name": "POSTGRES_PASSWORD",
-          "value": "<REPLACE_WITH_DB_PASSWORD>"
-        }
-      ]
-    },
-    {
       "name": "backend",
       "image": "<YOUR_AWS_ACCOUNT_ID>.dkr.ecr.eu-north-1.amazonaws.com/iv1201-backend:latest",
       "memory": 250,
@@ -45,7 +25,7 @@
         },
         {
           "name": "DB_HOST",
-          "value": "postgres"
+          "value": "<YOUR_RDS_ENDPOINT>"
         },
         {
           "name": "DB_NAME",
@@ -53,7 +33,7 @@
         },
         {
           "name": "DB_PASSWORD",
-          "value": "<REPLACE_WITH_DB_PASSWORD>"
+          "value": "<REPLACE_WITH_RDS_PASSWORD>"
         },
         {
           "name": "DB_PORT",
@@ -71,8 +51,7 @@
           "name": "NODE_ENV",
           "value": "production"
         }
-      ],
-      "links": ["postgres"]
+      ]
     },
     {
       "name": "frontend",
