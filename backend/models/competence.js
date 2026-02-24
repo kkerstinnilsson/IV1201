@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
      * Helper method for defining associations.
      */
     static associate(models) {
-      this.hasMany(models.CompetenceProfiile, { foreignKey: 'competence_id' });
+      this.hasMany(models.CompetenceProfile, { foreignKey: 'competence_id' });
     }
   }
   Competence.init({
