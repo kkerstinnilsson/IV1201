@@ -2,7 +2,7 @@
  * @file UserDAO.js
  * @description Data Access Object for users/authentication
  */
-const { sequelize, Credentials, Person, Role } = require("../../models");
+const { Credentials, Person, Role } = require("../../models");
 
 
 class UserDAO {
@@ -46,8 +46,11 @@ class UserDAO {
    * @param {string} username
    * @returns {Promise<boolean>}
    */
-  async usernameExists(username) {
-    const found = await Credentials.findOne({ where: { username }, attributes: ["credential_id"] });
+  async usernameExists(username, t = null) {
+    const found = await Credentials.findOne({ 
+      where: { username }, 
+      attributes: ["credential_id"],
+      transaction: t || undefined, });
     return found !== null;
   }
 
@@ -56,8 +59,11 @@ class UserDAO {
    * @param {string} email
    * @returns {Promise<boolean>}
    */
-  async emailExists(email) {
-    const found = await Person.findOne({ where: { email }, attributes: ["person_id"] });
+  async emailExists(email, t = null) {
+    const found = await Person.findOne({ 
+      where: { email }, 
+      attributes: ["person_id"],
+      transaction: t || undefined, });
     return found !== null;
   }
 
@@ -66,8 +72,11 @@ class UserDAO {
    * @param {string} pnr
    * @returns {Promise<boolean>}
    */
-  async pnrExists(pnr) {
-    const found = await Person.findOne({ where: { pnr }, attributes: ["person_id"] });
+  async pnrExists(pnr, t = null) {
+    const found = await Person.findOne({ 
+      where: { pnr }, 
+      attributes: ["person_id"], 
+      transaction: t || undefined, });
     return found !== null;
   }
 
@@ -77,8 +86,9 @@ class UserDAO {
    * @param {Object} userData
    * @returns {Promise<{personId:number, username:string}>}
    */
-  async createApplicant({ name, surname, email, pnr, username, passwordHash }) {
-    return sequelize.transaction(async (t) => {
+  async createApplicant({ name, surname, email, pnr, username, passwordHash }, t) {
+      if (!t) throw new Error("Transaction is required for createApplicant");
+      
       const person = await Person.create(
         { name, surname, email, pnr, role_id: 2 },
         { transaction: t }
@@ -94,7 +104,6 @@ class UserDAO {
       );
 
       return { personId: person.person_id, username };
-    });
   }
 }
 
