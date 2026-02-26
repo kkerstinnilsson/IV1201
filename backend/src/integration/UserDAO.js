@@ -2,50 +2,108 @@
  * @file UserDAO.js
  * @description Data Access Object for users/authentication
  */
-const { Pool } = require("pg");
+const { Credentials, Person, Role } = require("../../models");
+
 
 class UserDAO {
-  constructor() {
-    this.pool = new Pool({
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      port: Number(process.env.DB_PORT),
+
+  /**
+   * Retrieves a user by username
+   * @param {string} username
+   * @returns {Promise<{id:number, username:string, passwordHash:string, role:string} | null>}
+   */
+  async findByUsername(username) {
+    const cred = await Credentials.findOne({
+    where: { username },
+    attributes: ["username", "password"],
+    include: [
+        {
+          model: Person,
+          attributes: ["person_id"],
+          include: [
+            {                
+              model: Role,
+              attributes: ["name"],
+            },
+          ],
+        },
+      ],
     });
+
+    if (!cred || !cred.Person) return null;
+    const roleName = cred.Person.Role?.name ?? "unknown";
+
+    return {
+      id: cred.Person.person_id,
+      username: cred.username,
+      passwordHash: cred.password,
+      role: roleName,
+    };
   }
 
   /**
-   * Find a user by username.
-   *
+   * Checks if a username already exists.
    * @param {string} username
-   * @returns {Promise<{id:number, username:string, password:string, role:'recruiter'|'applicant'}|null>}
+   * @returns {Promise<boolean>}
    */
-  async findByUsername(username) {
-    const result = await this.pool.query(
-      `
-      SELECT 
-        person_id,
-        username,
-        password,
-        role_id
-      FROM public.person
-      WHERE username = $1
-      `,
-      [username]
-    );
-    
-    if (result.rows.length === 0) {
-      return null;
-    }
-    
-    const row = result.rows[0];
-    return {
-      id: row.person_id,
-      username: row.username,
-      password: row.password,
-      role: row.role_id === 1 ? "recruiter" : "applicant",
-    };
+  async usernameExists(username, t = null) {
+    const found = await Credentials.findOne({ 
+      where: { username }, 
+      attributes: ["credential_id"],
+      transaction: t || undefined, });
+    return found !== null;
+  }
+
+  /**
+   * Checks if a email already exists.
+   * @param {string} email
+   * @returns {Promise<boolean>}
+   */
+  async emailExists(email, t = null) {
+    const found = await Person.findOne({ 
+      where: { email }, 
+      attributes: ["person_id"],
+      transaction: t || undefined, });
+    return found !== null;
+  }
+
+  /**
+   * Checks if a pnr already exists.
+   * @param {string} pnr
+   * @returns {Promise<boolean>}
+   */
+  async pnrExists(pnr, t = null) {
+    const found = await Person.findOne({ 
+      where: { pnr }, 
+      attributes: ["person_id"], 
+      transaction: t || undefined, });
+    return found !== null;
+  }
+
+  /**
+   * Creates a new applicant account within a transaction.
+   * Rolls back if any insert fails.
+   * @param {Object} userData
+   * @returns {Promise<{personId:number, username:string}>}
+   */
+  async createApplicant({ name, surname, email, pnr, username, passwordHash }, t) {
+      if (!t) throw new Error("Transaction is required for createApplicant");
+      
+      const person = await Person.create(
+        { name, surname, email, pnr, role_id: 2 },
+        { transaction: t }
+      );
+
+      await Credentials.create(
+        {
+          person_id: person.person_id,
+          username,
+          password: passwordHash,
+        },
+        { transaction: t }
+      );
+
+      return { personId: person.person_id, username };
   }
 }
 

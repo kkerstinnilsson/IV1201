@@ -10,6 +10,7 @@ import ApplicantHomeContainer from './containers/ApplicantHomeContainer';
 import LoginContainer from './containers/LoginContainer';
 import Layout from './presentation/components/Layout';
 import useAuth from './hooks/useAuth';
+import RegisterContainer from './containers/RegisterContainer';
 
 
 /**
@@ -34,6 +35,15 @@ const { user, setUser, checkingSession, handleLogout } = useAuth();
             user
               ? <Navigate to={user.role === 'recruiter' ? '/recruiter' : '/applicant'} replace />
               : <LoginContainer onLoginSuccess={setUser} />
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            user
+              ? <Navigate to={user.role === 'recruiter' ? '/recruiter' : '/applicant'} replace />
+              : <RegisterContainer />
           }
         />
 

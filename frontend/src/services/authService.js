@@ -5,6 +5,21 @@
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
+export async function register(name, surname, email, pnr, username, password) {
+  const response = await fetch(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ name, surname, email, pnr, username, password }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(data?.message ?? `Response status: ${response.status}`);
+  }
+  return data;
+}
+
 /**
  * Log in with username/password.
  * @param {string} username
