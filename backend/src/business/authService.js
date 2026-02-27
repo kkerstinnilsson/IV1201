@@ -3,9 +3,10 @@
  * @description Business logic for authentication.
  */
 
-const bcrypt = require("bcrypt");
-const { sequelize } = require("../../models");
-const UserDAO = require("../integration/UserDAO");
+const bcrypt = require('bcrypt');
+const { sequelize } = require('../../models');
+const UserDAO = require('../integration/UserDAO');
+
 const userDAO = new UserDAO();
 
 const BCRYPT_ROUNDS = 12;
@@ -16,37 +17,42 @@ const BCRYPT_ROUNDS = 12;
  * - Hashes the plaintext password using bcrypt
  * - Delegates persistence (Person + Credentials) to DAO
  *
- * @param {{name:string, surname:string, email:string, pnr:string, username:string, password:string}} data
+ * @param {{name:string, surname:string, email:string, pnr:string, username:string,
+ * password:string}} data
  * @returns {Promise<{id:number, username:string}>}
  * @throws {Error} With code USERNAME_TAKEN / EMAIL_TAKEN / PNR_TAKEN if duplicates exist.
  */
 async function register(data) {
-  const { name, surname, email, pnr, username, password } = data;
+  const {
+    name, surname, email, pnr, username, password,
+  } = data;
 
   return sequelize.transaction(async (t) => {
-      if (await userDAO.usernameExists(username, t)) {
-      const err = new Error("username already exists");
-      err.code = "USERNAME_TAKEN";
+    if (await userDAO.usernameExists(username, t)) {
+      const err = new Error('username already exists');
+      err.code = 'USERNAME_TAKEN';
       throw err;
     }
 
     if (await userDAO.emailExists(email, t)) {
-      const err = new Error("email already exists");
-      err.code = "EMAIL_TAKEN";
+      const err = new Error('email already exists');
+      err.code = 'EMAIL_TAKEN';
       throw err;
     }
 
     if (await userDAO.pnrExists(pnr, t)) {
-      const err = new Error("pnr already exists");
-      err.code = "PNR_TAKEN";
+      const err = new Error('pnr already exists');
+      err.code = 'PNR_TAKEN';
       throw err;
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    const created = await userDAO.createApplicant({
-      name, surname, email, pnr, username, passwordHash }, 
-      t 
+    const created = await userDAO.createApplicant(
+      {
+        name, surname, email, pnr, username, passwordHash,
+      },
+      t,
     );
 
     return { id: created.personId, username: created.username };

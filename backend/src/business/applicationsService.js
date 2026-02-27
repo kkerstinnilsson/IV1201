@@ -3,7 +3,8 @@
  * @description Business logic layer for applications
  */
 
-const RecruitementDAO = require("../integration/RecruitementDAO");
+const RecruitementDAO = require('../integration/RecruitementDAO');
+
 const dao = new RecruitementDAO();
 
 /**
@@ -13,10 +14,9 @@ const dao = new RecruitementDAO();
  * @throws {Error} If DAO fails
  */
 async function getAllApplications() {
-  console.log("applicationsService: getAllApplications called");
-  return await dao.getAllApplicants();
+  console.log('applicationsService: getAllApplications called');
+  return dao.getAllApplicants();
 }
-
 
 /**
  * Submits a new application including user expertise and availability
@@ -28,15 +28,15 @@ async function getAllApplications() {
  * @throws {Error} If the DAO fails to create the application
  */
 async function submitApplication({ userId, expertiseList, availability }) {
-  console.log("applicationsService: submitApplication called");
+  console.log('applicationsService: submitApplication called');
 
   const alreadyExists = await dao.hasApplication(userId);
 
   if (alreadyExists) {
-    throw new Error("APPLICATION_ALREADY_EXISTS");
+    throw new Error('APPLICATION_ALREADY_EXISTS');
   }
 
-  return await dao.createApplication({
+  return dao.createApplication({
     userId,
     expertiseList,
     availability,
@@ -50,9 +50,8 @@ async function submitApplication({ userId, expertiseList, availability }) {
  * @throws {Error} If DAO lookup fails
  */
 async function hasApplication(personId) {
-  return await dao.hasApplication(personId);
+  return dao.hasApplication(personId);
 }
-
 
 /**
  * Retrieves the application submission status for a given user.
@@ -61,35 +60,33 @@ async function hasApplication(personId) {
  * @throws {Error} If DAO lookup fails
  */
 async function getApplicationStatus(userId) {
-  console.log("applicationsService: getApplicationStatus called");
+  console.log('applicationsService: getApplicationStatus called');
 
-  const hasApplication = await dao.hasApplication(userId);
+  const userHasApplication = await dao.hasApplication(userId);
 
   return {
-    hasApplication,
+    hasApplication: userHasApplication,
   };
 }
 
-
 /**
  * Deletes an existing application
- * 
+ *
  * @param {number} userId The ID of the applicant
  * @returns {Promise<void>}
  * @throws {Error} If no application exists or DAO deletion fails
  */
 async function deleteApplication(userId) {
-  console.log("applicationsService: deleteApplication called");
+  console.log('applicationsService: deleteApplication called');
 
   const exists = await dao.hasApplication(userId);
 
   if (!exists) {
-    throw new Error("APPLICATION_NOT_FOUND");
+    throw new Error('APPLICATION_NOT_FOUND');
   }
 
-  return await dao.deleteApplication(userId);
+  return dao.deleteApplication(userId);
 }
-
 
 module.exports = {
   getAllApplications,
@@ -98,4 +95,3 @@ module.exports = {
   getApplicationStatus,
   deleteApplication,
 };
-

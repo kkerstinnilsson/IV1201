@@ -1,12 +1,12 @@
+/* eslint-disable class-methods-use-this */
+
 /**
  * @file UserDAO.js
  * @description Data Access Object for users/authentication
  */
-const { Credentials, Person, Role } = require("../../models");
-
+const { Credentials, Person, Role } = require('../../models');
 
 class UserDAO {
-
   /**
    * Retrieves a user by username
    * @param {string} username
@@ -14,16 +14,16 @@ class UserDAO {
    */
   async findByUsername(username) {
     const cred = await Credentials.findOne({
-    where: { username },
-    attributes: ["username", "password"],
-    include: [
+      where: { username },
+      attributes: ['username', 'password'],
+      include: [
         {
           model: Person,
-          attributes: ["person_id"],
+          attributes: ['person_id'],
           include: [
-            {                
+            {
               model: Role,
-              attributes: ["name"],
+              attributes: ['name'],
             },
           ],
         },
@@ -31,7 +31,7 @@ class UserDAO {
     });
 
     if (!cred || !cred.Person) return null;
-    const roleName = cred.Person.Role?.name ?? "unknown";
+    const roleName = cred.Person.Role?.name ?? 'unknown';
 
     return {
       id: cred.Person.person_id,
@@ -47,10 +47,11 @@ class UserDAO {
    * @returns {Promise<boolean>}
    */
   async usernameExists(username, t = null) {
-    const found = await Credentials.findOne({ 
-      where: { username }, 
-      attributes: ["credential_id"],
-      transaction: t || undefined, });
+    const found = await Credentials.findOne({
+      where: { username },
+      attributes: ['credential_id'],
+      transaction: t || undefined,
+    });
     return found !== null;
   }
 
@@ -60,10 +61,11 @@ class UserDAO {
    * @returns {Promise<boolean>}
    */
   async emailExists(email, t = null) {
-    const found = await Person.findOne({ 
-      where: { email }, 
-      attributes: ["person_id"],
-      transaction: t || undefined, });
+    const found = await Person.findOne({
+      where: { email },
+      attributes: ['person_id'],
+      transaction: t || undefined,
+    });
     return found !== null;
   }
 
@@ -73,10 +75,11 @@ class UserDAO {
    * @returns {Promise<boolean>}
    */
   async pnrExists(pnr, t = null) {
-    const found = await Person.findOne({ 
-      where: { pnr }, 
-      attributes: ["person_id"], 
-      transaction: t || undefined, });
+    const found = await Person.findOne({
+      where: { pnr },
+      attributes: ['person_id'],
+      transaction: t || undefined,
+    });
     return found !== null;
   }
 
@@ -86,24 +89,28 @@ class UserDAO {
    * @param {Object} userData
    * @returns {Promise<{personId:number, username:string}>}
    */
-  async createApplicant({ name, surname, email, pnr, username, passwordHash }, t) {
-      if (!t) throw new Error("Transaction is required for createApplicant");
-      
-      const person = await Person.create(
-        { name, surname, email, pnr, role_id: 2 },
-        { transaction: t }
-      );
+  async createApplicant({
+    name, surname, email, pnr, username, passwordHash,
+  }, t) {
+    if (!t) throw new Error('Transaction is required for createApplicant');
 
-      await Credentials.create(
-        {
-          person_id: person.person_id,
-          username,
-          password: passwordHash,
-        },
-        { transaction: t }
-      );
+    const person = await Person.create(
+      {
+        name, surname, email, pnr, role_id: 2,
+      },
+      { transaction: t },
+    );
 
-      return { personId: person.person_id, username };
+    await Credentials.create(
+      {
+        person_id: person.person_id,
+        username,
+        password: passwordHash,
+      },
+      { transaction: t },
+    );
+
+    return { personId: person.person_id, username };
   }
 }
 

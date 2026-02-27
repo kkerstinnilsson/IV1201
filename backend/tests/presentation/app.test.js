@@ -1,5 +1,6 @@
 const request = require('supertest');
 const app = require('../../src/app');
+
 jest.mock('../../models/index.js'); // Mock the database models to prevent actual DB calls during tests
 
 /**

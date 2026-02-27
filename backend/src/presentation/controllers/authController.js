@@ -4,6 +4,7 @@
  */
 
 const authService = require('../../business/authService');
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const pnrRegex = /^\d{8}-\d{4}$/;
 
@@ -17,54 +18,58 @@ const pnrRegex = /^\d{8}-\d{4}$/;
  * @returns {Promise<void>}
  */
 async function register(req, res) {
-  const { name, surname, email, pnr, username, password } = req.body ?? {};
+  const {
+    name, surname, email, pnr, username, password,
+  } = req.body ?? {};
 
   const missing = [];
   const invalid = [];
 
-  if (!name) missing.push("name");
-  if (!surname) missing.push("surname");
+  if (!name) missing.push('name');
+  if (!surname) missing.push('surname');
   if (!email) {
-    missing.push("email");
+    missing.push('email');
   } else if (!emailRegex.test(email)) {
-    invalid.push("email");
+    invalid.push('email');
   }
   if (!pnr) {
-    missing.push("pnr");
+    missing.push('pnr');
   } else if (!pnrRegex.test(pnr)) {
-    invalid.push("pnr");
+    invalid.push('pnr');
   }
   if (!username) {
-    missing.push("username");
+    missing.push('username');
   } else if (username.length < 3) {
-    invalid.push("username");
+    invalid.push('username');
   }
   if (!password) {
-    missing.push("password");
+    missing.push('password');
   } else if (password.length < 6) {
-    invalid.push("password");
+    invalid.push('password');
   }
 
   if (missing.length > 0 || invalid.length > 0) {
     return res.status(400).json({
-      message: "validation failed",
+      message: 'validation failed',
       missing,
       invalid,
     });
   }
 
   try {
-    const created = await authService.register({ name, surname, email, pnr, username, password });
+    const created = await authService.register({
+      name, surname, email, pnr, username, password,
+    });
 
     return res.status(201).json({
-      message: "account created",
+      message: 'account created',
       user: created,
     });
   } catch (err) {
-    if (err.code === "USERNAME_TAKEN" || err.code === "EMAIL_TAKEN" || err.code === "PNR_TAKEN") {
+    if (err.code === 'USERNAME_TAKEN' || err.code === 'EMAIL_TAKEN' || err.code === 'PNR_TAKEN') {
       return res.status(409).json({ message: err.message, code: err.code });
     }
-    return res.status(500).json({ message: "registration failed" });
+    return res.status(500).json({ message: 'registration failed' });
   }
 }
 
@@ -80,13 +85,13 @@ async function login(req, res) {
 
   try {
     const user = await authService.login(username, password);
-    
+
     if (!user) {
       return res.status(401).json({ message: 'login failed' });
     }
 
     // Regenerate session to prevent session fixation
-    req.session.regenerate((err) => {
+    return req.session.regenerate((err) => {
       if (err) {
         return res.status(500).json({ message: 'session regeneration failed' });
       }
@@ -94,7 +99,7 @@ async function login(req, res) {
       req.session.user = user;
 
       // Ensure session is saved before responding
-      req.session.save((saveErr) => {
+      return req.session.save((saveErr) => {
         if (saveErr) {
           return res.status(500).json({ message: 'session save failed' });
         }
@@ -103,7 +108,7 @@ async function login(req, res) {
       });
     });
   } catch (err) {
-    return res.status(500).json({ message: 'login failed due to server error'})
+    return res.status(500).json({ message: 'login failed due to server error' });
   }
 }
 
@@ -122,7 +127,6 @@ function logout(req, res) {
   });
 }
 
-
 /**
  * Return the currently authenticated user from the session.
  */
@@ -131,5 +135,6 @@ async function me(req, res) {
   return res.json({ user: req.session.user });
 }
 
-
-module.exports = { login, logout, me, register };
+module.exports = {
+  login, logout, me, register,
+};
