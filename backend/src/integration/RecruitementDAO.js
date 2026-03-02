@@ -6,9 +6,14 @@
  * @requires dotenv
  */
 
+const {
+  AppError,
+  DatabaseError,
+  ValidationError,
+} = require("../business/errors/AppError");
+
 const { Pool } = require("pg");
 require("dotenv").config();
-
 
 /**
  * Class representing the Recruitment DAO
@@ -18,8 +23,6 @@ class RecruitementDAO {
    * Creates a new DAO and initializes the Postgres connection pool
    */
   constructor() {
-    console.log("RecruitementDAO: initializing database pool");
-
     this.pool = new Pool({
       user: process.env.DB_USER,
       host: process.env.DB_HOST,
@@ -31,16 +34,15 @@ class RecruitementDAO {
 
   /**
    * Fetch all applicants with role_id = 2 which are the applicants in the database
-   * 
-   * TODO: We need to implement an application table in the database to store status of 
+   *
+   * TODO: We need to implement an application table in the database to store status of
    * application. Currently bypassed by hardcoded status line.
-   * 
+   *
    * @async
    * @returns {Promise<Array<{id: number, firstName: string, lastName: string, status: string}>>}
-   * @throws {Error} If a database error occurs
+   * @throws {DatabaseError} If a database error occurs
    */
   async getAllApplicants() {
-    console.log("RecruitementDAO: getAllApplicants called");
     try {
       const result = await this.pool.query(
         "SELECT person_id, name, surname FROM public.person WHERE role_id = 2"
@@ -54,13 +56,10 @@ class RecruitementDAO {
         status: "unhandled",
       }));
     } catch (error) {
-      console.error("RecruitementDAO error:", error);
-      throw error;
+      throw new DatabaseError("Failed to fetch applicants", error);
     }
   }
 
-    
-  
   /**
    * Persists a complete application within a database transaction.
    *
@@ -74,7 +73,7 @@ class RecruitementDAO {
    * @param {{startDate: string, endDate: string}} params.availability Availability period
    * @returns {Promise<{status: string, personId: number}>}
    *          Confirmation object after successful commit
-   * @throws {Error} If transaction fails or competence is unknown
+   * @throws {ValidationError|DatabaseError}
    */
   async createApplication({ userId, expertiseList, availability }) {
     const client = await this.pool.connect();
@@ -103,7 +102,7 @@ class RecruitementDAO {
         );
 
         if (competenceResult.rows.length === 0) {
-          throw new Error(`Unknown competence: ${area}`);
+          throw new ValidationError(`Unknown competence: ${area}`);
         }
 
         const competenceId = competenceResult.rows[0].competence_id;
@@ -124,9 +123,19 @@ class RecruitementDAO {
         personId: userId,
       };
     } catch (error) {
-      await client.query("ROLLBACK");
-      console.error("RecruitementDAO.createApplication failed:", error);
-      throw error;
+      // rollback safely
+      try {
+        await client.query("ROLLBACK");
+      } catch (_) {
+        // Suppress rollback errors to avoid masking original error
+      }
+
+      
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new DatabaseError("Failed to create application", error);
     } finally {
       client.release();
     }
@@ -135,76 +144,87 @@ class RecruitementDAO {
   /**
    * Checks whether a user has any existing application records.
    *
-   * An application is considered to exist if at least one availability record or one competence_profile record exists.
-   * 
+   * An application is considered to exist if at least one availability record
+   * or one competence_profile record exists.
+   *
    * @param {number} personId ID of the applicant
    * @returns {Promise<boolean>} True if application data exists, otherwise false
-   * @throws {Error} If a database query fails
+   * @throws {DatabaseError} If a database query fails
    */
   async hasApplication(personId) {
-  const availabilityExists = await this.pool.query(
-    `SELECT 1 FROM availability WHERE person_id = $1 LIMIT 1`,
-    [personId]
-  );
+    try {
+      const availabilityExists = await this.pool.query(
+        `SELECT 1 FROM availability WHERE person_id = $1 LIMIT 1`,
+        [personId]
+      );
 
-  const competenceExists = await this.pool.query(
-    `SELECT 1 FROM competence_profile WHERE person_id = $1 LIMIT 1`,
-    [personId]
-  );
+      const competenceExists = await this.pool.query(
+        `SELECT 1 FROM competence_profile WHERE person_id = $1 LIMIT 1`,
+        [personId]
+      );
 
-  return availabilityExists.rowCount > 0 || competenceExists.rowCount > 0;
-}
+      return (
+        availabilityExists.rowCount > 0 ||
+        competenceExists.rowCount > 0
+      );
+    } catch (error) {
+      throw new DatabaseError("Failed to check application status", error);
+    }
+  }
 
   /**
- * Delete an applicants full application- availability and conpetence
- *
- * @async
- * @param {number} userId - The ID of the applicant
- * @returns {Promise<Object>} Deletion result
- * @throws {Error} If a database error occurs
- */
-async deleteApplication(userId) {
-  const client = await this.pool.connect();
+   * Delete an applicant's full application — availability and competence.
+   *
+   * @async
+   * @param {number} userId - The ID of the applicant
+   * @returns {Promise<{status: string, personId: number}>} Deletion result
+   * @throws {DatabaseError}
+   */
+  async deleteApplication(userId) {
+    const client = await this.pool.connect();
 
-  try {
-    await client.query("BEGIN");
+    try {
+      await client.query("BEGIN");
 
-    await client.query(
-      `
-      DELETE FROM competence_profile
-      WHERE person_id = $1
-      `,
-      [userId]
-    );
+      await client.query(
+        `
+        DELETE FROM competence_profile
+        WHERE person_id = $1
+        `,
+        [userId]
+      );
 
-    await client.query(
-      `
-      DELETE FROM availability
-      WHERE person_id = $1
-      `,
-      [userId]
-    );
+      await client.query(
+        `
+        DELETE FROM availability
+        WHERE person_id = $1
+        `,
+        [userId]
+      );
 
-    await client.query("COMMIT");
+      await client.query("COMMIT");
 
-    return {
-      status: "deleted",
-      personId: userId,
-    };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("RecruitementDAO.deleteApplication failed:", error);
-    throw error;
-  } finally {
-    client.release();
+      return {
+        status: "deleted",
+        personId: userId,
+      };
+    } catch (error) {
+      //rollback safely
+      try {
+        await client.query("ROLLBACK");
+      } catch (_) {
+        //sSuppress rollback errors
+      }
+
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new DatabaseError("Failed to delete application", error);
+    } finally {
+      client.release();
+    }
   }
 }
-
-
-
-}
-
-
-
 
 module.exports = RecruitementDAO;

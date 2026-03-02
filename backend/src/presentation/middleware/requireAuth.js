@@ -3,10 +3,13 @@
  * @description Middleware that requires an authenticated session.
  */
 
+const { ValidationError } = require('../../business/errors/AppError');
+
 function requireAuth(req, res, next) {
   if (!req.session?.user) {
-    return res.status(401).json({ message: 'not logged in' });
+    throw new ValidationError('Not authenticated', 401);
   }
+
   return next();
 }
 

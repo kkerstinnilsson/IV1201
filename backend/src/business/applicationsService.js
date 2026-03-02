@@ -6,6 +6,12 @@
 const RecruitementDAO = require("../integration/RecruitementDAO");
 const dao = new RecruitementDAO();
 
+const {
+  AppError,
+  ValidationError,
+  NotFoundError,
+} = require("../business/errors/AppError");
+
 /**
  * Fetch all applications via DAO
  * @async
@@ -14,7 +20,13 @@ const dao = new RecruitementDAO();
  */
 async function getAllApplications() {
   console.log("applicationsService: getAllApplications called");
-  return await dao.getAllApplicants();
+
+  try {
+    return await dao.getAllApplicants();
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError("Failed to fetch applications", 500, { cause: error });
+  }
 }
 
 
@@ -30,17 +42,23 @@ async function getAllApplications() {
 async function submitApplication({ userId, expertiseList, availability }) {
   console.log("applicationsService: submitApplication called");
 
-  const alreadyExists = await dao.hasApplication(userId);
+  try {
+    const alreadyExists = await dao.hasApplication(userId);
 
-  if (alreadyExists) {
-    throw new Error("APPLICATION_ALREADY_EXISTS");
+    if (alreadyExists) {
+      throw new ValidationError("Application already exists for this user");
+    }
+
+    return await dao.createApplication({
+      userId,
+      expertiseList,
+      availability,
+    });
+
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError("Failed to submit application", 500, { cause: error });
   }
-
-  return await dao.createApplication({
-    userId,
-    expertiseList,
-    availability,
-  });
 }
 
 /**
@@ -50,7 +68,12 @@ async function submitApplication({ userId, expertiseList, availability }) {
  * @throws {Error} If DAO lookup fails
  */
 async function hasApplication(personId) {
-  return await dao.hasApplication(personId);
+  try {
+    return await dao.hasApplication(personId);
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError("Failed to check application existence", 500, { cause: error });
+  }
 }
 
 
@@ -63,11 +86,17 @@ async function hasApplication(personId) {
 async function getApplicationStatus(userId) {
   console.log("applicationsService: getApplicationStatus called");
 
-  const hasApplication = await dao.hasApplication(userId);
+  try {
+    const hasApplication = await dao.hasApplication(userId);
 
-  return {
-    hasApplication,
-  };
+    return {
+      hasApplication,
+    };
+
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError("Failed to retrieve application status", 500, { cause: error });
+  }
 }
 
 
@@ -81,13 +110,19 @@ async function getApplicationStatus(userId) {
 async function deleteApplication(userId) {
   console.log("applicationsService: deleteApplication called");
 
-  const exists = await dao.hasApplication(userId);
+  try {
+    const exists = await dao.hasApplication(userId);
 
-  if (!exists) {
-    throw new Error("APPLICATION_NOT_FOUND");
+    if (!exists) {
+      throw new NotFoundError("Application not found");
+    }
+
+    return await dao.deleteApplication(userId);
+
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError("Failed to delete application", 500, { cause: error });
   }
-
-  return await dao.deleteApplication(userId);
 }
 
 
@@ -98,4 +133,3 @@ module.exports = {
   getApplicationStatus,
   deleteApplication,
 };
-

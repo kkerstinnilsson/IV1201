@@ -4,6 +4,11 @@
  */
 
 const authService = require('../../business/authService');
+const {
+  ValidationError,
+  AppError,
+} = require('../../business/errors/AppError');
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const pnrRegex = /^\d{8}-\d{4}$/;
 
@@ -46,26 +51,25 @@ async function register(req, res) {
   }
 
   if (missing.length > 0 || invalid.length > 0) {
-    return res.status(400).json({
-      message: "validation failed",
+    throw new ValidationError("Validation failed", 400, {
       missing,
       invalid,
     });
   }
 
-  try {
-    const created = await authService.register({ name, surname, email, pnr, username, password });
+  const created = await authService.register({
+    name,
+    surname,
+    email,
+    pnr,
+    username,
+    password
+  });
 
-    return res.status(201).json({
-      message: "account created",
-      user: created,
-    });
-  } catch (err) {
-    if (err.code === "USERNAME_TAKEN" || err.code === "EMAIL_TAKEN" || err.code === "PNR_TAKEN") {
-      return res.status(409).json({ message: err.message, code: err.code });
-    }
-    return res.status(500).json({ message: "registration failed" });
-  }
+  return res.status(201).json({
+    message: "account created",
+    user: created,
+  });
 }
 
 /**
@@ -75,51 +79,51 @@ async function login(req, res) {
   const { username, password } = req.body ?? {};
 
   if (!username || !password) {
-    return res.status(400).json({ message: 'username and password are required' });
+    throw new ValidationError('Username and password are required');
   }
 
-  try {
-    const user = await authService.login(username, password);
-    
-    if (!user) {
-      return res.status(401).json({ message: 'login failed' });
-    }
+  const user = await authService.login(username, password);
 
-    // Regenerate session to prevent session fixation
+  if (!user) {
+    // not revealing whether username or password was wrong
+    throw new ValidationError('Invalid credentials');
+  }
+
+  // prevent session fixation
+  await new Promise((resolve, reject) => {
     req.session.regenerate((err) => {
-      if (err) {
-        return res.status(500).json({ message: 'session regeneration failed' });
-      }
-
-      req.session.user = user;
-
-      // Ensure session is saved before responding
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          return res.status(500).json({ message: 'session save failed' });
-        }
-
-        return res.json({ user });
-      });
+      if (err) return reject(new AppError('Session regeneration failed', 500, { cause: err }));
+      resolve();
     });
-  } catch (err) {
-    return res.status(500).json({ message: 'login failed due to server error'})
-  }
+  });
+
+  req.session.user = user;
+
+  await new Promise((resolve, reject) => {
+    req.session.save((err) => {
+      if (err) return reject(new AppError('Session save failed', 500, { cause: err }));
+      resolve();
+    });
+  });
+
+  return res.json({ user });
 }
 
 /**
  * Log out the current user by destroying the session.
  */
-function logout(req, res) {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: 'logout failed' });
-    }
-
-    // Clear session-cookien in browser
-    res.clearCookie('connect.sid');
-    return res.json({ message: 'logged out' });
+async function logout(req, res) {
+  await new Promise((resolve, reject) => {
+    req.session.destroy((err) => {
+      if (err) return reject(new AppError('Logout failed', 500, { cause: err }));
+      resolve();
+    });
   });
+
+  // Clear session-cookien in browser
+  res.clearCookie('connect.sid');
+
+  return res.json({ message: 'logged out' });
 }
 
 
@@ -127,7 +131,10 @@ function logout(req, res) {
  * Return the currently authenticated user from the session.
  */
 async function me(req, res) {
-  if (!req.session?.user) return res.status(401).json({ message: 'not authenticated' });
+  if (!req.session?.user) {
+    throw new ValidationError('Not authenticated', 401);
+  }
+
   return res.json({ user: req.session.user });
 }
 

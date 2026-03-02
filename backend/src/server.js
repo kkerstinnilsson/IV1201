@@ -2,7 +2,6 @@
  * @file server.js
  * @description Entry point for the backend REST API
  */
-
 require('dotenv').config({ path: __dirname + '/../.env' });
 
 const express = require("express");
@@ -13,6 +12,24 @@ const applicationsController = require("./presentation/routes/applicationsRoutes
 const authRoutes = require('./presentation/routes/authRoutes');
 
 const app = express();
+const errorHandler = require("./presentation/middleware/errorHandler");
+
+// Process-level errors
+if (!process.env.SESSION_SECRET) {
+  console.error("FATAL ERROR: SESSION_SECRET is not defined");
+  process.exit(1);
+}
+
+process.on("uncaughtException", (err) => {
+  console.error("UNCAUGHT EXCEPTION:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("UNHANDLED REJECTION:", err);
+  process.exit(1);
+});
+
 
 // Define CORS options
 const corsOptions = {
@@ -58,6 +75,12 @@ app.use("/applications", cors(corsOptions), applicationsController);
  * Authentication API. - With CORS
  */
 app.use('/auth', cors(corsOptions), authRoutes);
+
+
+/**
+ * Global error handler (must be last middleware)
+ */
+app.use(errorHandler);
 
 /**
  * Start the server

@@ -8,6 +8,11 @@ const { sequelize } = require("../../models");
 const UserDAO = require("../integration/UserDAO");
 const userDAO = new UserDAO();
 
+const {
+  AppError,
+  ValidationError,
+} = require("../business/errors/AppError");
+
 const BCRYPT_ROUNDS = 12;
 
 /**
@@ -23,34 +28,36 @@ const BCRYPT_ROUNDS = 12;
 async function register(data) {
   const { name, surname, email, pnr, username, password } = data;
 
-  return sequelize.transaction(async (t) => {
+  try {
+    return await sequelize.transaction(async (t) => {
+
       if (await userDAO.usernameExists(username, t)) {
-      const err = new Error("username already exists");
-      err.code = "USERNAME_TAKEN";
-      throw err;
-    }
+        throw new ValidationError("Username already exists");
+      }
 
-    if (await userDAO.emailExists(email, t)) {
-      const err = new Error("email already exists");
-      err.code = "EMAIL_TAKEN";
-      throw err;
-    }
+      if (await userDAO.emailExists(email, t)) {
+        throw new ValidationError("Email already exists");
+      }
 
-    if (await userDAO.pnrExists(pnr, t)) {
-      const err = new Error("pnr already exists");
-      err.code = "PNR_TAKEN";
-      throw err;
-    }
+      if (await userDAO.pnrExists(pnr, t)) {
+        throw new ValidationError("Personal number already exists");
+      }
 
-    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    const created = await userDAO.createApplicant({
-      name, surname, email, pnr, username, passwordHash }, 
-      t 
-    );
+      const created = await userDAO.createApplicant(
+        { name, surname, email, pnr, username, passwordHash }, 
+        t
+      );
 
-    return { id: created.personId, username: created.username };
-  });
+      return { id: created.personId, username: created.username };
+    });
+
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+
+    throw new AppError("Registration failed", 500, { cause: error });
+  }
 }
 
 /**
@@ -61,22 +68,29 @@ async function register(data) {
  * @returns {Promise<{id:number, username:string, role:string} | null>}
  */
 async function login(username, password) {
-  const user = await userDAO.findByUsername(username);
+  try {
+    const user = await userDAO.findByUsername(username);
 
-  if (!user) {
-    return null;
+    if (!user) {
+      return null; 
+    }
+
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) {
+      return null; 
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+    };
+
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+
+    throw new AppError("Authentication failed", 500, { cause: error });
   }
-
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) {
-    return null;
-  }
-
-  return {
-    id: user.id,
-    username: user.username,
-    role: user.role,
-  };
 }
 
 module.exports = { login, register };
