@@ -1,101 +1,81 @@
 /**
  * @file applicationsService.js
- * @description Business logic layer for applications
+ * @description Business logic layer for handling applications
  */
 
-const RecruitementDAO = require("../integration/RecruitementDAO");
+const { sequelize } = require('../../models/');
+const RecruitementDAO = require('../integration/RecruitementDAO');
 const dao = new RecruitementDAO();
 
 /**
- * Fetch all applications via DAO
+ * Fetches all applicants
  * @async
- * @returns {Promise<Array<{id: number, firstName: string, lastName: string, status: string}>>}
- * @throws {Error} If DAO fails
+ * @returns {Promise<Array>} List of applicants
  */
 async function getAllApplications() {
-  console.log("applicationsService: getAllApplications called");
-  return await dao.getAllApplicants();
+    return await dao.getAllApplicants();
 }
 
-
 /**
- * Submits a new application including user expertise and availability
- * @param {Object} applicationData The application details
- * @param {number} applicationData.userId The ID of the applicant
- * @param {Array<Object>} applicationData.expertiseList List of skills and years of experience
- * @param {Object} applicationData.availability Start and end dates for availability
- * @returns {Promise<Object>} The created application record
- * @throws {Error} If the DAO fails to create the application
+ * Submits a complete application with expertise and availability
+ * Wraps all database operations in a single transaction via loops
+ * @async
+ * @param {number} userId - The ID of the applicant
+ * @param {Array} expertiseList - List of { name, years }
+ * @param {Array} availabilityList - List of { startDate, endDate }
  */
-async function submitApplication({ userId, expertiseList, availability }) {
-  console.log("applicationsService: submitApplication called");
+async function submitApplication(userId, expertiseList, availabilityList) {
+    return await sequelize.transaction(async (t) => {
+        
+        // Check for existing application
+        const alreadyExists = await dao.hasApplication(userId, t);
+        if (alreadyExists) {
+            const err = new Error("User has already submitted an application.");
+            err.code = "ALREADY_APPLIED";
+            throw err;
+        }
 
-  const alreadyExists = await dao.hasApplication(userId);
+        // Create the main application record
+        await dao.createApplication(userId, t);
 
-  if (alreadyExists) {
-    throw new Error("APPLICATION_ALREADY_EXISTS");
-  }
+        // Map names to IDs and save expertise
+        for (const exp of expertiseList) {
+            const competenceId = await dao.getCompetenceIdByName(exp.name, t);
+            if (!competenceId) {
+                throw new Error(`Competence '${exp.name}' not found in database.`);
+            }
+            await dao.createCompetenceProfile(userId, competenceId, exp.years, t);
+        }
 
-  return await dao.createApplication({
-    userId,
-    expertiseList,
-    availability,
-  });
+        // Save availability periods
+        for (const period of availabilityList) {
+            await dao.createAvailability(userId, period, t);
+        }
+        return { success: true };
+    });
 }
 
 /**
- * Checks whether a user already has a submitted application.
- * @param {number} personId The ID of the user
- * @returns {Promise<boolean>} True if an application exists, otherwise false
- * @throws {Error} If DAO lookup fails
- */
-async function hasApplication(personId) {
-  return await dao.hasApplication(personId);
-}
-
-
-/**
- * Retrieves the application submission status for a given user.
- * @param {number} userId The ID of the user
- * @returns {Promise<{hasApplication: boolean}>} Object indicating whether an application exists
- * @throws {Error} If DAO lookup fails
- */
-async function getApplicationStatus(userId) {
-  console.log("applicationsService: getApplicationStatus called");
-
-  const hasApplication = await dao.hasApplication(userId);
-
-  return {
-    hasApplication,
-  };
-}
-
-
-/**
- * Deletes an existing application
- * 
- * @param {number} userId The ID of the applicant
- * @returns {Promise<void>}
- * @throws {Error} If no application exists or DAO deletion fails
+ * Deletes an existing application for a user
+ * @param {number} userId 
  */
 async function deleteApplication(userId) {
-  console.log("applicationsService: deleteApplication called");
+    return await sequelize.transaction(async (t) => {
+        const exists = await dao.hasApplication(userId, t);
 
-  const exists = await dao.hasApplication(userId);
+        if (!exists) {
+            const err = new Error("No application found to delete.");
+            err.code = "APPLICATION_NOT_FOUND";
+            throw err;
+        }
 
-  if (!exists) {
-    throw new Error("APPLICATION_NOT_FOUND");
-  }
-
-  return await dao.deleteApplication(userId);
+        await dao.deleteApplication(userId, t);
+        return { success: true };
+    });
 }
 
-
 module.exports = {
-  getAllApplications,
-  submitApplication,
-  hasApplication,
-  getApplicationStatus,
-  deleteApplication,
+    getAllApplications,
+    submitApplication,
+    deleteApplication
 };
-
