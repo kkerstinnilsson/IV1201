@@ -43,8 +43,9 @@ export default function LoginPage({ loading, error, onLogin }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label>Username</label>
+            <label htmlFor="username">Username</label>
             <input
+              id="username"
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -52,8 +53,9 @@ export default function LoginPage({ loading, error, onLogin }) {
           </div>
 
           <div className="space-y-1">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <input
+              id="password"
               autoComplete="current-password"
               type="password"
               value={password}
