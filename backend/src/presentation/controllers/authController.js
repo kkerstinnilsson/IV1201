@@ -9,8 +9,8 @@ const {
   AppError,
 } = require('../../business/errors/AppError');
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const pnrRegex = /^\d{8}-\d{4}$/;
+const { validateEmail, validateMinLen, validatePnr } =
+  require("../utils/validate");
 
 /**
  * Handles user registration.
@@ -29,34 +29,15 @@ async function register(req, res) {
   const missing = [];
   const invalid = [];
 
-  if (!name) missing.push('name');
-  if (!surname) missing.push('surname');
-  if (!email) {
-    missing.push('email');
-  } else if (!emailRegex.test(email)) {
-    invalid.push('email');
-  }
-  if (!pnr) {
-    missing.push('pnr');
-  } else if (!pnrRegex.test(pnr)) {
-    invalid.push('pnr');
-  }
-  if (!username) {
-    missing.push('username');
-  } else if (username.length < 3) {
-    invalid.push('username');
-  }
-  if (!password) {
-    missing.push('password');
-  } else if (password.length < 6) {
-    invalid.push('password');
-  }
+  if (!name) missing.push("name");
+  if (!surname) missing.push("surname");
+  validateEmail(email, missing, invalid);
+  validatePnr(pnr, missing, invalid);
+  validateMinLen(username, 3, "username", missing, invalid);
+  validateMinLen(password, 6, "password", missing, invalid);
 
   if (missing.length > 0 || invalid.length > 0) {
-    throw new ValidationError('Validation failed', 400, {
-      missing,
-      invalid,
-    });
+    throw new ValidationError('Validation failed', 400, { missing, invalid });
   }
 
   const created = await authService.register({
@@ -75,7 +56,9 @@ async function register(req, res) {
 }
 
 /**
- * Log in a user and store user info in session.
+ * Handles user login.
+ * Validates input and delegates authentication to authService.
+ * Stores authenticated user in the session.
  */
 async function login(req, res) {
   const { username, password } = req.body ?? {};
@@ -112,7 +95,7 @@ async function login(req, res) {
 }
 
 /**
- * Log out the current user by destroying the session.
+ * Handles user logout by destroying the session.
  */
 async function logout(req, res) {
   await new Promise((resolve, reject) => {
