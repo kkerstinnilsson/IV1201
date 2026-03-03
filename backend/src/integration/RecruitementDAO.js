@@ -1,203 +1,213 @@
+/* eslint-disable class-methods-use-this */
+
 /**
  * @file RecruitementDAO.js
- * @description Data Access Object (DAO) responsible for all recruitment-related
- * database interactions. Handles persistence and retrieval of applicant data
- * @requires pg
- * @requires dotenv
+ * @description Data Access Object (DAO) responsible
+ * for recruitment related database interactions
  */
 
-const { Pool } = require('pg');
-require('dotenv').config();
+const {
+  DatabaseError,
+} = require('../business/errors/AppError');
+
+const {
+  Person, Application, Availability, Competence, CompetenceProfile,
+} = require('../../models');
 
 /**
- * Class representing the Recruitment DAO
+ * Class representing the RecruitementDAO
+ * Database logic for applicants and applications
  */
 class RecruitementDAO {
-  /**
-   * Creates a new DAO and initializes the Postgres connection pool
-   */
   constructor() {
-    console.log('RecruitementDAO: initializing database pool');
-
-    this.pool = new Pool({
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      port: process.env.DB_PORT,
-    });
+    console.log(' RecruitementDAO: Initialized with Sequelize');
   }
 
   /**
-   * Fetch all applicants with role_id = 2 which are the applicants in the database
-   *
-   * TODO: We need to implement an application table in the database to store status of
-   * application. Currently bypassed by hardcoded status line.
-   *
+   * Retrieves all applications for the recruiter view
+   * Joins with the Person model to get names and filters by applicant role
    * @async
-   * @returns {Promise<Array<{id: number, firstName: string, lastName: string, status: string}>>}
-   * @throws {Error} If a database error occurs
+   * @param {Object} [t=null] - Optional transaction object
+   * @returns {Promise<Array<{id:number, firstName:string, lastName:string, status:string}>>}
+   * @throws {DatabaseError} If a database error occurs
    */
-  async getAllApplicants() {
-    console.log('RecruitementDAO: getAllApplicants called');
+  async getAllApplicants(t = null) {
     try {
-      const result = await this.pool.query(
-        'SELECT person_id, name, surname FROM public.person WHERE role_id = 2',
-      );
+      const rows = await Application.findAll({
+        attributes: ['status'],
+        include: [{
+          model: Person,
+          attributes: ['person_id', 'name', 'surname'],
+          where: { role_id: 2 },
+          required: true,
+        }],
+        transaction: t || undefined,
+      });
 
-      // Map database rows to frontend DTO
-      return result.rows.map((row) => ({
-        id: row.person_id,
-        firstName: row.name,
-        lastName: row.surname,
-        status: 'unhandled',
+      return rows.map((r) => ({
+        id: r.Person.person_id,
+        firstName: r.Person.name,
+        lastName: r.Person.surname,
+        status: r.status,
       }));
     } catch (error) {
-      console.error('RecruitementDAO error:', error);
-      throw error;
+      throw new DatabaseError('Failed to fetch applicants', error);
     }
   }
 
   /**
-   * Persists a complete application within a database transaction.
-   *
-   * Inserts one availability record and one or more competence_profile records.
-   * If any insert fails, all changes are rolled back.
-   *
+   * Creates a new application record for a person
+   * Must be called within a transaction for atomicity
    * @async
-   * @param {Object} params
-   * @param {number} params.userId ID of the applicant
-   * @param {Array<{area: string, years: number}>} params.expertiseList List of competences
-   * @param {{startDate: string, endDate: string}} params.availability Availability period
-   * @returns {Promise<{status: string, personId: number}>}
-   *          Confirmation object after successful commit
-   * @throws {Error} If transaction fails or competence is unknown
+   * @param {number} personId - ID of the applicant
+   * @param {Object} t - The required transaction object
+   * @returns {Promise<Object>} The created application instance
+   * @throws {DatabaseError} If a database error occurs
    */
-  async createApplication({ userId, expertiseList, availability }) {
-    const client = await this.pool.connect();
-
+  async createApplication(personId, t) {
+    if (!t) {
+      throw new Error('A transaction is required to create an application row!');
+    }
     try {
-      await client.query('BEGIN');
-
-      await client.query(
-        `
-        INSERT INTO availability (person_id, from_date, to_date)
-        VALUES ($1, $2, $3)
-        `,
-        [userId, availability.startDate, availability.endDate],
+      return await Application.create(
+        { person_id: personId },
+        { transaction: t },
       );
-
-      // eslint-disable-next-line no-restricted-syntax
-      for (const item of expertiseList) {
-        const { area, years } = item;
-
-        // eslint-disable-next-line no-await-in-loop
-        const competenceResult = await client.query(
-          `
-          SELECT competence_id
-          FROM competence
-          WHERE name = $1
-          `,
-          [area],
-        );
-
-        if (competenceResult.rows.length === 0) {
-          throw new Error(`Unknown competence: ${area}`);
-        }
-
-        const competenceId = competenceResult.rows[0].competence_id;
-
-        // eslint-disable-next-line no-await-in-loop
-        await client.query(
-          `
-          INSERT INTO competence_profile (person_id, competence_id, years_of_experience)
-          VALUES ($1, $2, $3)
-          `,
-          [userId, competenceId, years],
-        );
-      }
-
-      await client.query('COMMIT');
-
-      return {
-        status: 'submitted',
-        personId: userId,
-      };
     } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('RecruitementDAO.createApplication failed:', error);
-      throw error;
-    } finally {
-      client.release();
+      throw new DatabaseError('Failed to create application', error);
     }
   }
 
   /**
-   * Checks whether a user has any existing application records.
-   *
-   * An application is considered to exist if at least one availability record or one
-   * competence_profile record exists.
-   *
-   * @param {number} personId ID of the applicant
-   * @returns {Promise<boolean>} True if application data exists, otherwise false
-   * @throws {Error} If a database query fails
+   * Creates an availability record for a person
+   * Must be called within a transaction for atomicity
+   * @async
+   * @param {number} personId - ID of the applicant
+   * @param {Object} availability - Object containing startDate and endDate
+   * @param {Object} t - The required transaction object
+   * @returns {Promise<Object>} The created availability record
+   * @throws {DatabaseError} If a database error occurs
    */
-  async hasApplication(personId) {
-    const availabilityExists = await this.pool.query(
-      'SELECT 1 FROM availability WHERE person_id = $1 LIMIT 1',
-      [personId],
-    );
-
-    const competenceExists = await this.pool.query(
-      'SELECT 1 FROM competence_profile WHERE person_id = $1 LIMIT 1',
-      [personId],
-    );
-
-    return availabilityExists.rowCount > 0 || competenceExists.rowCount > 0;
+  async createAvailability(personId, { startDate, endDate }, t) {
+    if (!t) {
+      throw new Error('A transaction is required to create availability records!');
+    }
+    try {
+      return await Availability.create(
+        {
+          person_id: personId,
+          from_date: startDate,
+          to_date: endDate,
+        },
+        { transaction: t },
+      );
+    } catch (error) {
+      throw new DatabaseError('Failed to create availability', error);
+    }
   }
 
   /**
- * Delete an applicants full application- availability and conpetence
- *
- * @async
- * @param {number} userId - The ID of the applicant
- * @returns {Promise<Object>} Deletion result
- * @throws {Error} If a database error occurs
- */
-  async deleteApplication(userId) {
-    const client = await this.pool.connect();
-
+   * Creates a competence profile record for a person
+   * @async
+   * @param {number} personId - ID of the applicant
+   * @param {number} competenceId - The ID of the competence
+   * @param {number} years - Years of experience
+   * @param {Object} t - The required transaction object
+   * @returns {Promise<Object>} The created competence profile instance
+   * @throws {DatabaseError} If a database error occurs
+   */
+  async createCompetenceProfile(personId, competenceId, years, t) {
+    if (!t) {
+      throw new Error('A transaction is required to create a competence profile!');
+    }
     try {
-      await client.query('BEGIN');
-
-      await client.query(
-        `
-      DELETE FROM competence_profile
-      WHERE person_id = $1
-      `,
-        [userId],
+      return await CompetenceProfile.create(
+        {
+          person_id: personId,
+          competence_id: competenceId,
+          years_of_experience: years,
+        },
+        { transaction: t },
       );
-
-      await client.query(
-        `
-      DELETE FROM availability
-      WHERE person_id = $1
-      `,
-        [userId],
-      );
-
-      await client.query('COMMIT');
-
-      return {
-        status: 'deleted',
-        personId: userId,
-      };
     } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('RecruitementDAO.deleteApplication failed:', error);
-      throw error;
-    } finally {
-      client.release();
+      throw new DatabaseError('Failed to create competence profile', error);
+    }
+  }
+
+  /**
+   * Translates a competence name to its corresponding ID
+   * @async
+   * @param {string} name - The name of the competence
+   * @param {Object} [t=null] - Optional transaction reference
+   * @returns {Promise<number|null>} The competence_id if found, otherwise null
+   * @throws {DatabaseError} If a database error occurs
+   */
+  async getCompetenceIdByName(name, t = null) {
+    try {
+      const competence = await Competence.findOne({
+        where: { name },
+        attributes: ['competence_id'],
+        transaction: t || undefined,
+      });
+      return competence ? competence.competence_id : null;
+    } catch (error) {
+      throw new DatabaseError('Failed to fetch competence by name', error);
+    }
+  }
+
+  /**
+   * Checks whether an application exists for a person
+   * @async
+   * @param {number} personId - ID of the person to check
+   * @param {Object} [t=null] - Optional transaction reference
+   * @returns {Promise<boolean>} True if any application related data exists
+   * @throws {DatabaseError} If a database error occurs
+   */
+  async hasApplication(personId, t = null) {
+    try {
+      const appl = await Application.findOne({
+        where: { person_id: personId },
+        attributes: ['application_id'],
+        transaction: t || undefined,
+      });
+      if (appl) return true;
+
+      const availability = await Availability.findOne({
+        where: { person_id: personId },
+        attributes: ['availability_id'],
+        transaction: t || undefined,
+      });
+      if (availability) return true;
+
+      const competence = await CompetenceProfile.findOne({
+        where: { person_id: personId },
+        attributes: ['competence_profile_id'],
+        transaction: t || undefined,
+      });
+      return competence !== null;
+    } catch (error) {
+      throw new DatabaseError('Failed to check application existence', error);
+    }
+  }
+
+  /**
+   * Deletes all application-related data for a person
+   * @async
+   * @param {number} personId - ID of the person
+   * @param {Object} t - The required transaction object
+   * @returns {Promise<number>} Number of application rows deleted
+   * @throws {DatabaseError} If a database error occurs
+   */
+  async deleteApplication(personId, t) {
+    if (!t) {
+      throw new Error('A transaction is required to delete an application!');
+    }
+    try {
+      await CompetenceProfile.destroy({ where: { person_id: personId }, transaction: t });
+      await Availability.destroy({ where: { person_id: personId }, transaction: t });
+      return await Application.destroy({ where: { person_id: personId }, transaction: t });
+    } catch (error) {
+      throw new DatabaseError('Failed to delete application', error);
     }
   }
 }

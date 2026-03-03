@@ -6,6 +6,11 @@
  */
 const { Credentials, Person, Role } = require('../../models');
 
+const {
+  DatabaseError,
+  ValidationError,
+} = require('../business/errors/AppError');
+
 class UserDAO {
   /**
    * Retrieves a user by username
@@ -13,32 +18,36 @@ class UserDAO {
    * @returns {Promise<{id:number, username:string, passwordHash:string, role:string} | null>}
    */
   async findByUsername(username) {
-    const cred = await Credentials.findOne({
-      where: { username },
-      attributes: ['username', 'password'],
-      include: [
-        {
-          model: Person,
-          attributes: ['person_id'],
-          include: [
-            {
-              model: Role,
-              attributes: ['name'],
-            },
-          ],
-        },
-      ],
-    });
+    try {
+      const cred = await Credentials.findOne({
+        where: { username },
+        attributes: ['username', 'password'],
+        include: [
+          {
+            model: Person,
+            attributes: ['person_id'],
+            include: [
+              {
+                model: Role,
+                attributes: ['name'],
+              },
+            ],
+          },
+        ],
+      });
 
-    if (!cred || !cred.Person) return null;
-    const roleName = cred.Person.Role?.name ?? 'unknown';
+      if (!cred || !cred.Person) return null;
+      const roleName = cred.Person.Role?.name ?? 'unknown';
 
-    return {
-      id: cred.Person.person_id,
-      username: cred.username,
-      passwordHash: cred.password,
-      role: roleName,
-    };
+      return {
+        id: cred.Person.person_id,
+        username: cred.username,
+        passwordHash: cred.password,
+        role: roleName,
+      };
+    } catch (error) {
+      throw new DatabaseError('Failed to retrieve user by username', error);
+    }
   }
 
   /**
@@ -47,12 +56,17 @@ class UserDAO {
    * @returns {Promise<boolean>}
    */
   async usernameExists(username, t = null) {
-    const found = await Credentials.findOne({
-      where: { username },
-      attributes: ['credential_id'],
-      transaction: t || undefined,
-    });
-    return found !== null;
+    try {
+      const found = await Credentials.findOne({
+        where: { username },
+        attributes: ['credential_id'],
+        transaction: t || undefined,
+      });
+
+      return found !== null;
+    } catch (error) {
+      throw new DatabaseError('Failed to check if username exists', error);
+    }
   }
 
   /**
@@ -61,12 +75,17 @@ class UserDAO {
    * @returns {Promise<boolean>}
    */
   async emailExists(email, t = null) {
-    const found = await Person.findOne({
-      where: { email },
-      attributes: ['person_id'],
-      transaction: t || undefined,
-    });
-    return found !== null;
+    try {
+      const found = await Person.findOne({
+        where: { email },
+        attributes: ['person_id'],
+        transaction: t || undefined,
+      });
+
+      return found !== null;
+    } catch (error) {
+      throw new DatabaseError('Failed to check if email exists', error);
+    }
   }
 
   /**
@@ -75,12 +94,17 @@ class UserDAO {
    * @returns {Promise<boolean>}
    */
   async pnrExists(pnr, t = null) {
-    const found = await Person.findOne({
-      where: { pnr },
-      attributes: ['person_id'],
-      transaction: t || undefined,
-    });
-    return found !== null;
+    try {
+      const found = await Person.findOne({
+        where: { pnr },
+        attributes: ['person_id'],
+        transaction: t || undefined,
+      });
+
+      return found !== null;
+    } catch (error) {
+      throw new DatabaseError('Failed to check if pnr exists', error);
+    }
   }
 
   /**
@@ -92,25 +116,39 @@ class UserDAO {
   async createApplicant({
     name, surname, email, pnr, username, passwordHash,
   }, t) {
-    if (!t) throw new Error('Transaction is required for createApplicant');
+    if (!t) {
+      throw new ValidationError('Transaction is required for createApplicant');
+    }
 
-    const person = await Person.create(
-      {
-        name, surname, email, pnr, role_id: 2,
-      },
-      { transaction: t },
-    );
+    try {
+      const person = await Person.create(
+        {
+          name, surname, email, pnr, role_id: 2,
+        },
+        { transaction: t },
+      );
 
-    await Credentials.create(
-      {
-        person_id: person.person_id,
-        username,
-        password: passwordHash,
-      },
-      { transaction: t },
-    );
+      await Credentials.create(
+        {
+          person_id: person.person_id,
+          username,
+          password: passwordHash,
+        },
+        { transaction: t },
+      );
 
-    return { personId: person.person_id, username };
+      return { personId: person.person_id, username };
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw new ValidationError('Username, email, or personal number already exists');
+      }
+
+      if (error.name === 'SequelizeValidationError') {
+        throw new ValidationError(error.message);
+      }
+
+      throw new DatabaseError('Failed to create applicant account', error);
+    }
   }
 }
 
