@@ -9,6 +9,7 @@ const session = require('express-session');
 
 const applicationsController = require("./presentation/routes/applicationsRoutes");
 const authRoutes = require('./presentation/routes/authRoutes');
+const errorHandler = require("./presentation/middleware/errorHandler");
 
 const app = express();
 
@@ -55,5 +56,10 @@ app.use("/applications", cors(corsOptions), applicationsController);
  * Authentication API. - With CORS
  */
 app.use('/auth', cors(corsOptions), authRoutes);
+
+/**
+ * Global error handler (must be last middleware)
+ */
+app.use(errorHandler);
 
 module.exports = app;
