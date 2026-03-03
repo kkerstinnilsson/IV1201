@@ -30,6 +30,11 @@ To start development containers:
 docker-compose -f docker-compose.dev.yml up --build
 ```
 
+To start development containers with empty volumes:
+```bash
+docker-compose -f docker-compose.dev.yml up --build -V
+```
+
 To stop development containers:
 ```bash
 docker-compose -f docker-compose.dev.yml down

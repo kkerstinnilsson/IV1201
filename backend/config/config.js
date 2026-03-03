@@ -20,5 +20,13 @@ production: {
         rejectUnauthorized: false
       }
     }
+  },
+  test: {
+    dialect: 'postgres',
+    use_env_variable: null,
+    database: null,
+    username: null,
+    password: null,
+    host: null
   }
 }
