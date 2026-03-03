@@ -36,16 +36,15 @@ async function submitApplication(req, res) {
   if (!expertiseList || expertiseList.length === 0) {
     throw new ValidationError("Expertise list is required");
   }
-
   if (!availability?.startDate || !availability?.endDate) {
     throw new ValidationError("Availability is required");
   }
 
-  const application = await applicationsService.submitApplication({
+  const application = await applicationsService.submitApplication(
     userId,
     expertiseList,
-    availability,
-  });
+    [availability],
+  );
 
   res.status(201).json(application);
 }

@@ -1,18 +1,7 @@
 /**
  * @file server.js
- * @description Entry point for the backend REST API
+ * @description Starts the Express server for the backend REST API
  */
-require('dotenv').config({ path: __dirname + '/../.env' });
-
-const express = require("express");
-const cors = require("cors");
-const session = require('express-session');
-
-const applicationsController = require("./presentation/routes/applicationsRoutes");
-const authRoutes = require('./presentation/routes/authRoutes');
-
-const app = express();
-const errorHandler = require("./presentation/middleware/errorHandler");
 
 // Process-level errors
 if (!process.env.SESSION_SECRET) {
@@ -31,56 +20,7 @@ process.on("unhandledRejection", (err) => {
 });
 
 
-// Define CORS options
-const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  credentials: true,
-};
-
-// Enable JSON parsing
-app.use(express.json());
-
-/**
- * Session middleware for authentication.
- *
- * Stores authenticated user information and
- * uses a signed HTTP-only cookie to identify the user between requests.
- */
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: false, // set to true in production when using HTTPS
-  },
-}));
-
-/**
- * Health check route - No CORS needed
- */
-app.get("/", (req, res) => {
-  res.send("Hello backend");
-});
-
-/**
- * Applications API - With CORS
- * Routes prefixed with /applications
- */
-app.use("/applications", cors(corsOptions), applicationsController);
-
-
-/**
- * Authentication API. - With CORS
- */
-app.use('/auth', cors(corsOptions), authRoutes);
-
-
-/**
- * Global error handler (must be last middleware)
- */
-app.use(errorHandler);
+const app = require('./app');
 
 /**
  * Start the server
