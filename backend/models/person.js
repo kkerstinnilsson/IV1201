@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       this.hasOne(models.Application, { foreignKey: 'person_id' });
       this.hasOne(models.Credentials, { foreignKey: 'person_id' });
+      this.hasOne(models.AccountToken, { foreignKey: 'person_id' });
       this.hasMany(models.CompetenceProfile, { foreignKey: 'person_id' });
       this.hasMany(models.Availability, { foreignKey: 'person_id' });
     }
