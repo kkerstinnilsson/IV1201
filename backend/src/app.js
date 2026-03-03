@@ -9,7 +9,7 @@ const session = require('express-session');
 
 const applicationsController = require('./presentation/routes/applicationsRoutes');
 const authRoutes = require('./presentation/routes/authRoutes');
-const errorHandler = require("./presentation/middleware/errorHandler");
+const errorHandler = require('./presentation/middleware/errorHandler');
 
 const app = express();
 

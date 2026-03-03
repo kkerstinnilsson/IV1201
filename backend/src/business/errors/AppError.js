@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 /**
  * Base application error class
  */
@@ -16,7 +18,7 @@ class AppError extends Error {
  * Database-related errors
  */
 class DatabaseError extends AppError {
-  constructor(message = "Database operation failed", cause = null) {
+  constructor(message = 'Database operation failed', cause = null) {
     super(message, 500, { cause });
   }
 }
@@ -25,7 +27,7 @@ class DatabaseError extends AppError {
  * Resource not found
  */
 class NotFoundError extends AppError {
-  constructor(message = "Resource not found") {
+  constructor(message = 'Resource not found') {
     super(message, 404);
   }
 }
@@ -34,7 +36,7 @@ class NotFoundError extends AppError {
  * Client validation errors
  */
 class ValidationError extends AppError {
-  constructor(message = "Invalid input") {
+  constructor(message = 'Invalid input') {
     super(message, 400);
   }
 }
