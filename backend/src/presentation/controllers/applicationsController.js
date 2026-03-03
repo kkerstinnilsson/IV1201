@@ -37,21 +37,21 @@ async function submitApplication(req, res) {
       return res.status(400).json({ error: "Expertise list is required" });
     }
 
-    if (!availability?.startDate || !availability?.endDate) {
+    if (!availability || typeof availability !== 'object') {
       return res.status(400).json({ error: "Availability is required" });
     }
 
-    const application = await applicationsService.submitApplication({
+    const application = await applicationsService.submitApplication(
       userId,
       expertiseList,
-      availability,
-    });
+      [availability],
+    );
 
     res.status(201).json(application);
   } catch (error) {
     console.error("submitApplication error:", error);
 
-    if (error.message === "APPLICATION_ALREADY_EXISTS") {
+    if (error.code === "ALREADY_APPLIED") {
       return res.status(409).json({
         error: "You have already submitted an application",
       });
@@ -98,7 +98,7 @@ async function deleteApplication(req, res) {
   } catch (error) {
     console.error("deleteApplication error:", error);
 
-    if (error.message === "APPLICATION_NOT_FOUND") {
+    if (error.code === "APPLICATION_NOT_FOUND") {
       return res.status(404).json({
         error: "No application found to delete",
       });
