@@ -9,8 +9,7 @@ const {
   AppError,
 } = require('../../business/errors/AppError');
 
-const { validateEmail, validateMinLen, validatePnr } =
-  require("../utils/validate");
+const { validateEmail, validateMinLen, validatePnr } = require('../utils/validate');
 
 /**
  * Handles user registration.
@@ -29,12 +28,12 @@ async function register(req, res) {
   const missing = [];
   const invalid = [];
 
-  if (!name) missing.push("name");
-  if (!surname) missing.push("surname");
+  if (!name) missing.push('name');
+  if (!surname) missing.push('surname');
   validateEmail(email, missing, invalid);
   validatePnr(pnr, missing, invalid);
-  validateMinLen(username, 3, "username", missing, invalid);
-  validateMinLen(password, 6, "password", missing, invalid);
+  validateMinLen(username, 3, 'username', missing, invalid);
+  validateMinLen(password, 6, 'password', missing, invalid);
 
   if (missing.length > 0 || invalid.length > 0) {
     throw new ValidationError('Validation failed', 400, { missing, invalid });

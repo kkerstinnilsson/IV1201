@@ -116,11 +116,11 @@ class UserDAO {
    * @returns {Promise<void>}
    */
   async createCredentialsForPerson(personId, username, passwordHash, t) {
-    if (!t) throw new Error("Transaction is required for createCredentialsForPerson");
+    if (!t) throw new Error('Transaction is required for createCredentialsForPerson');
 
     await Credentials.create(
       { person_id: personId, username, password: passwordHash },
-      { transaction: t }
+      { transaction: t },
     );
   }
 

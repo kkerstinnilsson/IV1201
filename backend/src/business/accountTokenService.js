@@ -2,12 +2,12 @@
  * @file accountTokenService.js
  * @description Business logic for requesting and claiming an account token.
  */
-const crypto = require("crypto");
-const bcrypt = require("bcrypt");
-const { sequelize } = require("../../models");
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
+const { sequelize } = require('../../models');
 
-const AccountTokenDAO = require("../integration/AccountTokenDAO");
-const UserDAO = require("../integration/UserDAO");
+const AccountTokenDAO = require('../integration/AccountTokenDAO');
+const UserDAO = require('../integration/UserDAO');
 
 const accountTokenDAO = new AccountTokenDAO();
 const userDAO = new UserDAO();
@@ -16,11 +16,11 @@ const BCRYPT_ROUNDS = 12;
 const TOKEN_TTL_HOURS = 24;
 
 function sha256(s) {
-  return crypto.createHash("sha256").update(s).digest("hex");
+  return crypto.createHash('sha256').update(s).digest('hex');
 }
 
 function randomToken() {
-  return crypto.randomBytes(32).toString("hex");
+  return crypto.randomBytes(32).toString('hex');
 }
 
 /**
@@ -34,15 +34,15 @@ async function requestAccountToken(email) {
   return sequelize.transaction(async (t) => {
     const person = await accountTokenDAO.findApplicantByEmail(email, t);
     if (!person) {
-      const err = new Error("email not found");
-      err.code = "EMAIL_NOT_FOUND";
+      const err = new Error('email not found');
+      err.code = 'EMAIL_NOT_FOUND';
       throw err;
     }
 
     // Only applicants without credentials can request a token
     if (await accountTokenDAO.personHasCredentials(person.person_id, t)) {
-      const err = new Error("already has credentials");
-      err.code = "ALREADY_HAS_CREDENTIALS";
+      const err = new Error('already has credentials');
+      err.code = 'ALREADY_HAS_CREDENTIALS';
       throw err;
     }
 
@@ -54,10 +54,10 @@ async function requestAccountToken(email) {
 
     // const link = `http://localhost:5173/claim/${token}`;
 
-    const FRONTEND_BASE_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
+    const FRONTEND_BASE_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
     const link = `${FRONTEND_BASE_URL}/claim/${token}`;
 
-    // Simulated email 
+    // Simulated email
     console.log(`[SIMULATED_EMAIL] to=${person.email} link=${link}`);
 
     return { email: person.email, link, expiresAt };
@@ -79,22 +79,22 @@ async function claimAccountToken(token, username, password) {
   return sequelize.transaction(async (t) => {
     const tokenRow = await accountTokenDAO.findValidTokenByHash(tokenHash, t);
     if (!tokenRow) {
-      const err = new Error("invalid/expired/used token");
-      err.code = "TOKEN_INVALID";
+      const err = new Error('invalid/expired/used token');
+      err.code = 'TOKEN_INVALID';
       throw err;
     }
 
     // Ensure username is unique
     if (await userDAO.usernameExists(username, t)) {
-      const err = new Error("username already exists");
-      err.code = "USERNAME_TAKEN";
+      const err = new Error('username already exists');
+      err.code = 'USERNAME_TAKEN';
       throw err;
     }
 
     // Ensure person still doesn't have credentials
     if (await accountTokenDAO.personHasCredentials(tokenRow.person_id, t)) {
-      const err = new Error("already has credentials");
-      err.code = "ALREADY_HAS_CREDENTIALS";
+      const err = new Error('already has credentials');
+      err.code = 'ALREADY_HAS_CREDENTIALS';
       throw err;
     }
 

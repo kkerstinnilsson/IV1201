@@ -1,10 +1,12 @@
+/* eslint-disable class-methods-use-this */
+
 /**
  * @file AccountTokenDAO.js
  * @description DAO for on-request account token (claim existing account).
  */
 
-const { AccountToken, Person, Credentials } = require("../../models");
-const { Op } = require("sequelize");
+const { Op } = require('sequelize');
+const { AccountToken, Person, Credentials } = require('../../models');
 
 class AccountTokenDAO {
   /**
@@ -14,9 +16,9 @@ class AccountTokenDAO {
    */
   async findApplicantByEmail(email, t = null) {
     return Person.findOne({
-        where: { email, role_id: 2 },
-        attributes: ["person_id", "email"],
-        transaction: t || undefined,
+      where: { email, role_id: 2 },
+      attributes: ['person_id', 'email'],
+      transaction: t || undefined,
     });
   }
 
@@ -28,7 +30,7 @@ class AccountTokenDAO {
   async personHasCredentials(personId, t = null) {
     const found = await Credentials.findOne({
       where: { person_id: personId },
-      attributes: ["credential_id"],
+      attributes: ['credential_id'],
       transaction: t || undefined,
     });
     return found !== null;
@@ -43,7 +45,7 @@ class AccountTokenDAO {
    * @returns {Promise<void>}
    */
   async upsertAccountToken(personId, tokenHash, expiresAt, t) {
-    if (!t) throw new Error("Transaction is required for upsertAccountToken");
+    if (!t) throw new Error('Transaction is required for upsertAccountToken');
 
     await AccountToken.upsert(
       {
@@ -52,7 +54,7 @@ class AccountTokenDAO {
         expires_at: expiresAt,
         used_at: null,
       },
-      { transaction: t }
+      { transaction: t },
     );
   }
 
@@ -63,7 +65,7 @@ class AccountTokenDAO {
    * @returns {Promise<AccountToken|null>}
    */
   async findValidTokenByHash(tokenHash, t) {
-    if (!t) throw new Error("Transaction is required for findValidTokenByHash");
+    if (!t) throw new Error('Transaction is required for findValidTokenByHash');
 
     return AccountToken.findOne({
       where: {
@@ -83,14 +85,14 @@ class AccountTokenDAO {
    * @returns {Promise<void>}
    */
   async markTokenUsed(accountTokenId, t) {
-    if (!t) throw new Error("Transaction is required for markTokenUsed");
+    if (!t) throw new Error('Transaction is required for markTokenUsed');
 
     await AccountToken.update(
       { used_at: new Date() },
       {
         where: { account_token_id: accountTokenId, used_at: null },
         transaction: t,
-      }
+      },
     );
   }
 }
