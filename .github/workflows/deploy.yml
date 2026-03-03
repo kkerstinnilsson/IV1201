@@ -73,8 +73,8 @@ jobs:
           wait-for-service-stability: true
       
   acceptance-tests:
-    #needs: deploy
-    #if: github.ref == 'refs/heads/main'
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
