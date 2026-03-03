@@ -1,18 +1,18 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Person extends Model {
     /**
      * Helper method for defining associations
      */
     static associate(models) {
-      this.belongsTo(models.Role, { 
+      this.belongsTo(models.Role, {
         foreignKey: 'role_id',
         onUpdate: 'CASCADE',
-        onDelete: 'SET NULL'
-       });
+        onDelete: 'SET NULL',
+      });
       this.hasOne(models.Application, { foreignKey: 'person_id' });
       this.hasOne(models.Credentials, { foreignKey: 'person_id' });
       this.hasMany(models.CompetenceProfile, { foreignKey: 'person_id' });
@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
-      autoIncrement: true
+      autoIncrement: true,
     },
     name: {
       type: DataTypes.STRING,
@@ -32,29 +32,29 @@ module.exports = (sequelize, DataTypes) => {
     },
     surname: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     pnr: {
       type: DataTypes.STRING,
-       allowNull: true
+      allowNull: true,
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     role_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
         model: 'role',
-        key: 'role_id'
-      }
-    }
+        key: 'role_id',
+      },
+    },
   }, {
     sequelize,
-    modelName: 'Person', 
+    modelName: 'Person',
     tableName: 'person',
-    timestamps: false
+    timestamps: false,
   });
   return Person;
 };

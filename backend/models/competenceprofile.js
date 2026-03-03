@@ -1,22 +1,22 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class CompetenceProfile extends Model {
     /**
      * Helper method for defining associations
      */
     static associate(models) {
-      this.belongsTo(models.Person, { 
+      this.belongsTo(models.Person, {
         foreignKey: 'person_id',
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE' 
+        onDelete: 'CASCADE',
       });
-      this.belongsTo(models.Competence, { 
-        foreignKey: 'competence_id', 
+      this.belongsTo(models.Competence, {
+        foreignKey: 'competence_id',
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
       });
     }
   }
@@ -24,34 +24,34 @@ module.exports = (sequelize, DataTypes) => {
     competence_profile_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true, 
-      allowNull: false
+      autoIncrement: true,
+      allowNull: false,
     },
     person_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: 'person',
-        key: 'person_id'
+        key: 'person_id',
       },
-    }, 
+    },
     competence_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: 'competence',
-        key: 'competence_id'
+        key: 'competence_id',
       },
     },
     years_of_experience: {
       type: DataTypes.DECIMAL(4, 2),
-      allowNull: true
-    }
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'CompetenceProfile',
     tableName: 'competence_profile',
-    timestamps: false
+    timestamps: false,
   });
   return CompetenceProfile;
 };

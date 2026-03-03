@@ -1,7 +1,7 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Competence extends Model {
     /**
@@ -16,17 +16,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      allowNull: false
+      allowNull: false,
     },
     name: {
-        type: DataTypes.STRING,
-        allowNull: true
-    }
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Competence',
     tableName: 'competence',
-    timestamps: false
+    timestamps: false,
   });
   return Competence;
 };

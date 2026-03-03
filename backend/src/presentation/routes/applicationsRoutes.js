@@ -3,40 +3,39 @@
  * @description Express routes for applications endpoints.
  */
 
-const express = require("express");
-const applicationsController = require("../controllers/applicationsController");
-const requireAuth = require("../middleware/requireAuth");
-const requireRole = require("../middleware/requireRole");
+const express = require('express');
+const applicationsController = require('../controllers/applicationsController');
+const requireAuth = require('../middleware/requireAuth');
+const requireRole = require('../middleware/requireRole');
 
 const router = express.Router();
 
 router.get(
-  "/",
+  '/',
   requireAuth,
-  requireRole("recruiter"),
-  applicationsController.listApplications
+  requireRole('recruiter'),
+  applicationsController.listApplications,
 );
 
 router.get(
-  "/me/status",
+  '/me/status',
   requireAuth,
-  requireRole("applicant"),
-  applicationsController.getApplicationStatus
+  requireRole('applicant'),
+  applicationsController.getApplicationStatus,
 );
 
-
 router.post(
-  "/",
+  '/',
   requireAuth,
-  requireRole("applicant"),
-  applicationsController.submitApplication
+  requireRole('applicant'),
+  applicationsController.submitApplication,
 );
 
 router.delete(
-  "/me",
+  '/me',
   requireAuth,
-  requireRole("applicant"),
-  applicationsController.deleteApplication
+  requireRole('applicant'),
+  applicationsController.deleteApplication,
 );
 
 module.exports = router;

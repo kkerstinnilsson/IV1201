@@ -22,36 +22,38 @@ const pnrRegex = /^\d{8}-\d{4}$/;
  * @returns {Promise<void>}
  */
 async function register(req, res) {
-  const { name, surname, email, pnr, username, password } = req.body ?? {};
+  const {
+    name, surname, email, pnr, username, password,
+  } = req.body ?? {};
 
   const missing = [];
   const invalid = [];
 
-  if (!name) missing.push("name");
-  if (!surname) missing.push("surname");
+  if (!name) missing.push('name');
+  if (!surname) missing.push('surname');
   if (!email) {
-    missing.push("email");
+    missing.push('email');
   } else if (!emailRegex.test(email)) {
-    invalid.push("email");
+    invalid.push('email');
   }
   if (!pnr) {
-    missing.push("pnr");
+    missing.push('pnr');
   } else if (!pnrRegex.test(pnr)) {
-    invalid.push("pnr");
+    invalid.push('pnr');
   }
   if (!username) {
-    missing.push("username");
+    missing.push('username');
   } else if (username.length < 3) {
-    invalid.push("username");
+    invalid.push('username');
   }
   if (!password) {
-    missing.push("password");
+    missing.push('password');
   } else if (password.length < 6) {
-    invalid.push("password");
+    invalid.push('password');
   }
 
   if (missing.length > 0 || invalid.length > 0) {
-    throw new ValidationError("Validation failed", 400, {
+    throw new ValidationError('Validation failed', 400, {
       missing,
       invalid,
     });
@@ -63,11 +65,11 @@ async function register(req, res) {
     email,
     pnr,
     username,
-    password
+    password,
   });
 
   return res.status(201).json({
-    message: "account created",
+    message: 'account created',
     user: created,
   });
 }
@@ -93,7 +95,7 @@ async function login(req, res) {
   await new Promise((resolve, reject) => {
     req.session.regenerate((err) => {
       if (err) return reject(new AppError('Session regeneration failed', 500, { cause: err }));
-      resolve();
+      return resolve();
     });
   });
 
@@ -102,7 +104,7 @@ async function login(req, res) {
   await new Promise((resolve, reject) => {
     req.session.save((err) => {
       if (err) return reject(new AppError('Session save failed', 500, { cause: err }));
-      resolve();
+      return resolve();
     });
   });
 
@@ -116,7 +118,7 @@ async function logout(req, res) {
   await new Promise((resolve, reject) => {
     req.session.destroy((err) => {
       if (err) return reject(new AppError('Logout failed', 500, { cause: err }));
-      resolve();
+      return resolve();
     });
   });
 
@@ -125,7 +127,6 @@ async function logout(req, res) {
 
   return res.json({ message: 'logged out' });
 }
-
 
 /**
  * Return the currently authenticated user from the session.
@@ -138,5 +139,6 @@ async function me(req, res) {
   return res.json({ user: req.session.user });
 }
 
-
-module.exports = { login, logout, me, register };
+module.exports = {
+  login, logout, me, register,
+};

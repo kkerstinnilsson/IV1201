@@ -1,15 +1,18 @@
+/* eslint-disable class-methods-use-this */
+
 /**
  * @file RecruitementDAO.js
- * @description Data Access Object (DAO) responsible 
- * for recruitment related database interactions 
+ * @description Data Access Object (DAO) responsible
+ * for recruitment related database interactions
  */
 
 const {
   DatabaseError,
-} = require("../business/errors/AppError");
+} = require('../business/errors/AppError');
 
-const { Person, Application, Availability, Competence, CompetenceProfile }
-  = require("../../models");
+const {
+  Person, Application, Availability, Competence, CompetenceProfile,
+} = require('../../models');
 
 /**
  * Class representing the RecruitementDAO
@@ -17,7 +20,7 @@ const { Person, Application, Availability, Competence, CompetenceProfile }
  */
 class RecruitementDAO {
   constructor() {
-    console.log(" RecruitementDAO: Initialized with Sequelize");
+    console.log(' RecruitementDAO: Initialized with Sequelize');
   }
 
   /**
@@ -31,10 +34,10 @@ class RecruitementDAO {
   async getAllApplicants(t = null) {
     try {
       const rows = await Application.findAll({
-        attributes: ["status"],
+        attributes: ['status'],
         include: [{
           model: Person,
-          attributes: ["person_id", "name", "surname"],
+          attributes: ['person_id', 'name', 'surname'],
           where: { role_id: 2 },
           required: true,
         }],
@@ -48,7 +51,7 @@ class RecruitementDAO {
         status: r.status,
       }));
     } catch (error) {
-      throw new DatabaseError("Failed to fetch applicants", error);
+      throw new DatabaseError('Failed to fetch applicants', error);
     }
   }
 
@@ -63,15 +66,15 @@ class RecruitementDAO {
    */
   async createApplication(personId, t) {
     if (!t) {
-      throw new Error("A transaction is required to create an application row!");
+      throw new Error('A transaction is required to create an application row!');
     }
     try {
       return await Application.create(
         { person_id: personId },
-        { transaction: t }
+        { transaction: t },
       );
     } catch (error) {
-      throw new DatabaseError("Failed to create application", error);
+      throw new DatabaseError('Failed to create application', error);
     }
   }
 
@@ -87,7 +90,7 @@ class RecruitementDAO {
    */
   async createAvailability(personId, { startDate, endDate }, t) {
     if (!t) {
-      throw new Error("A transaction is required to create availability records!");
+      throw new Error('A transaction is required to create availability records!');
     }
     try {
       return await Availability.create(
@@ -96,10 +99,10 @@ class RecruitementDAO {
           from_date: startDate,
           to_date: endDate,
         },
-        { transaction: t }
+        { transaction: t },
       );
     } catch (error) {
-      throw new DatabaseError("Failed to create availability", error);
+      throw new DatabaseError('Failed to create availability', error);
     }
   }
 
@@ -115,7 +118,7 @@ class RecruitementDAO {
    */
   async createCompetenceProfile(personId, competenceId, years, t) {
     if (!t) {
-      throw new Error("A transaction is required to create a competence profile!");
+      throw new Error('A transaction is required to create a competence profile!');
     }
     try {
       return await CompetenceProfile.create(
@@ -124,10 +127,10 @@ class RecruitementDAO {
           competence_id: competenceId,
           years_of_experience: years,
         },
-        { transaction: t }
+        { transaction: t },
       );
     } catch (error) {
-      throw new DatabaseError("Failed to create competence profile", error);
+      throw new DatabaseError('Failed to create competence profile', error);
     }
   }
 
@@ -143,12 +146,12 @@ class RecruitementDAO {
     try {
       const competence = await Competence.findOne({
         where: { name },
-        attributes: ["competence_id"],
+        attributes: ['competence_id'],
         transaction: t || undefined,
       });
       return competence ? competence.competence_id : null;
     } catch (error) {
-      throw new DatabaseError("Failed to fetch competence by name", error);
+      throw new DatabaseError('Failed to fetch competence by name', error);
     }
   }
 
@@ -164,26 +167,26 @@ class RecruitementDAO {
     try {
       const appl = await Application.findOne({
         where: { person_id: personId },
-        attributes: ["application_id"],
+        attributes: ['application_id'],
         transaction: t || undefined,
       });
       if (appl) return true;
 
       const availability = await Availability.findOne({
         where: { person_id: personId },
-        attributes: ["availability_id"],
+        attributes: ['availability_id'],
         transaction: t || undefined,
       });
       if (availability) return true;
 
       const competence = await CompetenceProfile.findOne({
         where: { person_id: personId },
-        attributes: ["competence_profile_id"],
+        attributes: ['competence_profile_id'],
         transaction: t || undefined,
       });
       return competence !== null;
     } catch (error) {
-      throw new DatabaseError("Failed to check application existence", error);
+      throw new DatabaseError('Failed to check application existence', error);
     }
   }
 
@@ -197,14 +200,14 @@ class RecruitementDAO {
    */
   async deleteApplication(personId, t) {
     if (!t) {
-      throw new Error("A transaction is required to delete an application!");
+      throw new Error('A transaction is required to delete an application!');
     }
     try {
       await CompetenceProfile.destroy({ where: { person_id: personId }, transaction: t });
       await Availability.destroy({ where: { person_id: personId }, transaction: t });
       return await Application.destroy({ where: { person_id: personId }, transaction: t });
     } catch (error) {
-      throw new DatabaseError("Failed to delete application", error);
+      throw new DatabaseError('Failed to delete application', error);
     }
   }
 }

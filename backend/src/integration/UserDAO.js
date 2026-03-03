@@ -1,18 +1,17 @@
+/* eslint-disable class-methods-use-this */
+
 /**
  * @file UserDAO.js
  * @description Data Access Object for users/authentication
  */
-const { Credentials, Person, Role } = require("../../models");
+const { Credentials, Person, Role } = require('../../models');
 
 const {
-  AppError,
   DatabaseError,
   ValidationError,
-} = require("../business/errors/AppError");
-
+} = require('../business/errors/AppError');
 
 class UserDAO {
-
   /**
    * Retrieves a user by username
    * @param {string} username
@@ -22,15 +21,15 @@ class UserDAO {
     try {
       const cred = await Credentials.findOne({
         where: { username },
-        attributes: ["username", "password"],
+        attributes: ['username', 'password'],
         include: [
           {
             model: Person,
-            attributes: ["person_id"],
+            attributes: ['person_id'],
             include: [
-              {                
+              {
                 model: Role,
-                attributes: ["name"],
+                attributes: ['name'],
               },
             ],
           },
@@ -38,7 +37,7 @@ class UserDAO {
       });
 
       if (!cred || !cred.Person) return null;
-      const roleName = cred.Person.Role?.name ?? "unknown";
+      const roleName = cred.Person.Role?.name ?? 'unknown';
 
       return {
         id: cred.Person.person_id,
@@ -46,9 +45,8 @@ class UserDAO {
         passwordHash: cred.password,
         role: roleName,
       };
-
     } catch (error) {
-      throw new DatabaseError("Failed to retrieve user by username", error);
+      throw new DatabaseError('Failed to retrieve user by username', error);
     }
   }
 
@@ -59,16 +57,15 @@ class UserDAO {
    */
   async usernameExists(username, t = null) {
     try {
-      const found = await Credentials.findOne({ 
-        where: { username }, 
-        attributes: ["credential_id"],
+      const found = await Credentials.findOne({
+        where: { username },
+        attributes: ['credential_id'],
         transaction: t || undefined,
       });
 
       return found !== null;
-
     } catch (error) {
-      throw new DatabaseError("Failed to check if username exists", error);
+      throw new DatabaseError('Failed to check if username exists', error);
     }
   }
 
@@ -79,16 +76,15 @@ class UserDAO {
    */
   async emailExists(email, t = null) {
     try {
-      const found = await Person.findOne({ 
-        where: { email }, 
-        attributes: ["person_id"],
+      const found = await Person.findOne({
+        where: { email },
+        attributes: ['person_id'],
         transaction: t || undefined,
       });
 
       return found !== null;
-
     } catch (error) {
-      throw new DatabaseError("Failed to check if email exists", error);
+      throw new DatabaseError('Failed to check if email exists', error);
     }
   }
 
@@ -99,16 +95,15 @@ class UserDAO {
    */
   async pnrExists(pnr, t = null) {
     try {
-      const found = await Person.findOne({ 
-        where: { pnr }, 
-        attributes: ["person_id"], 
+      const found = await Person.findOne({
+        where: { pnr },
+        attributes: ['person_id'],
         transaction: t || undefined,
       });
 
       return found !== null;
-
     } catch (error) {
-      throw new DatabaseError("Failed to check if pnr exists", error);
+      throw new DatabaseError('Failed to check if pnr exists', error);
     }
   }
 
@@ -118,15 +113,19 @@ class UserDAO {
    * @param {Object} userData
    * @returns {Promise<{personId:number, username:string}>}
    */
-  async createApplicant({ name, surname, email, pnr, username, passwordHash }, t) {
+  async createApplicant({
+    name, surname, email, pnr, username, passwordHash,
+  }, t) {
     if (!t) {
-      throw new ValidationError("Transaction is required for createApplicant");
+      throw new ValidationError('Transaction is required for createApplicant');
     }
 
     try {
       const person = await Person.create(
-        { name, surname, email, pnr, role_id: 2 },
-        { transaction: t }
+        {
+          name, surname, email, pnr, role_id: 2,
+        },
+        { transaction: t },
       );
 
       await Credentials.create(
@@ -135,25 +134,20 @@ class UserDAO {
           username,
           password: passwordHash,
         },
-        { transaction: t }
+        { transaction: t },
       );
 
       return { personId: person.person_id, username };
-
     } catch (error) {
-
-      
-      if (error.name === "SequelizeUniqueConstraintError") {
-        throw new ValidationError("Username, email, or personal number already exists");
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw new ValidationError('Username, email, or personal number already exists');
       }
 
-      
-      if (error.name === "SequelizeValidationError") {
+      if (error.name === 'SequelizeValidationError') {
         throw new ValidationError(error.message);
       }
 
-      
-      throw new DatabaseError("Failed to create applicant account", error);
+      throw new DatabaseError('Failed to create applicant account', error);
     }
   }
 }

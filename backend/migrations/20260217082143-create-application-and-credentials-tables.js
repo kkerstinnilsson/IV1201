@@ -1,35 +1,33 @@
-'use strict';
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.createTable('credentials', {
       credential_id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-        allowNull: false
+        allowNull: false,
       },
       person_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         unique: true,
-        references: { 
-          model: 'person', 
-          key: 'person_id' 
+        references: {
+          model: 'person',
+          key: 'person_id',
         },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE'
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
       },
       username: {
         type: Sequelize.STRING(255),
         unique: true,
-        allowNull: false
+        allowNull: false,
       },
       password: {
         type: Sequelize.STRING(255),
-        allowNull: false
-      }
+        allowNull: false,
+      },
     });
 
     // Create 'application'
@@ -38,24 +36,24 @@ module.exports = {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-        allowNull: false
+        allowNull: false,
       },
       person_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         unique: true,
-        references: { 
-          model: 'person', 
-          key: 'person_id' 
+        references: {
+          model: 'person',
+          key: 'person_id',
         },
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
       },
       status: {
         type: Sequelize.ENUM('accepted', 'rejected', 'unhandled'),
         defaultValue: 'unhandled',
-        allowNull: false
-      }
+        allowNull: false,
+      },
     });
 
     // Migrate existing username and password data from 'person' to 'credentials'
@@ -71,8 +69,8 @@ module.exports = {
     `);
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('application');
     await queryInterface.dropTable('credentials');
-  }
+  },
 };

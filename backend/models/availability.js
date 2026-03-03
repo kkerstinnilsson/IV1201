@@ -1,7 +1,7 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Availability extends Model {
     /**
@@ -9,11 +9,11 @@ module.exports = (sequelize, DataTypes) => {
      * one availability belongs to one person via the fk person_id in availability
      */
     static associate(models) {
-     this.belongsTo(models.Person, { 
-      foreignKey: 'person_id',
-       onUpdate: 'CASCADE',
-       onDelete: 'CASCADE'
-    });
+      this.belongsTo(models.Person, {
+        foreignKey: 'person_id',
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
+      });
     }
   }
   Availability.init({
@@ -21,29 +21,29 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      allowNull: false
+      allowNull: false,
     },
     person_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: 'person',
-        key: 'person_id'
-      }
+        key: 'person_id',
+      },
     },
     from_date: {
-      type: DataTypes.DATEONLY, 
-      allowNull: true
+      type: DataTypes.DATEONLY,
+      allowNull: true,
     },
     to_date: {
       type: DataTypes.DATEONLY,
-      allowNull: true
-    }
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Availability',
     tableName: 'availability',
-    timestamps: false
+    timestamps: false,
   });
   return Availability;
 };

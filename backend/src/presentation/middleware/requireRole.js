@@ -6,8 +6,7 @@
 const { ValidationError } = require('../../business/errors/AppError');
 
 function requireRole(role) {
-  return function (req, res, next) {
-
+  return function requireRoleMiddleware(req, res, next) {
     if (!req.session?.user) {
       throw new ValidationError('Not authenticated', 401);
     }
