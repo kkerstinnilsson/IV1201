@@ -40,9 +40,9 @@ async function submitApplication(userId, expertiseList, availabilityList) {
 
         // Map names to IDs and save expertise
         for (const exp of expertiseList) {
-            const competenceId = await dao.getCompetenceIdByName(exp.name, t);
+            const competenceId = await dao.getCompetenceIdByName(exp.area, t);
             if (!competenceId) {
-                throw new Error(`Competence '${exp.name}' not found in database.`);
+                throw new Error(`Competence '${exp.area}' not found in database.`);
             }
             await dao.createCompetenceProfile(userId, competenceId, exp.years, t);
         }
@@ -74,8 +74,25 @@ async function deleteApplication(userId) {
     });
 }
 
+/**
+ * Retrieves the application submission status for a given user.
+ * @param {number} userId The ID of the user
+ * @returns {Promise<{hasApplication: boolean}>} Object indicating whether an application exists
+ * @throws {Error} If DAO lookup fails
+ * */
+async function getApplicationStatus(userId) {
+  console.log("applicationsService: getApplicationStatus called");
+
+  const hasApplication = await dao.hasApplication(userId);
+
+  return {
+    hasApplication,
+  };
+}
+
 module.exports = {
     getAllApplications,
     submitApplication,
-    deleteApplication
+    deleteApplication,
+    getApplicationStatus,
 };

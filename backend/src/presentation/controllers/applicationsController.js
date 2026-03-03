@@ -37,14 +37,14 @@ async function submitApplication(req, res) {
       return res.status(400).json({ error: "Expertise list is required" });
     }
 
-    if (!availability || !Array.isArray(availability)) {
+    if (!availability || typeof availability !== 'object') {
       return res.status(400).json({ error: "Availability is required" });
     }
 
     const application = await applicationsService.submitApplication(
       userId,
       expertiseList,
-      availability,
+      [availability],
     );
 
     res.status(201).json(application);
