@@ -105,8 +105,9 @@ export default function ApplicantHomePage({
           </div>
           <form onSubmit={handleAddExpertise} className="grid gap-4 sm:grid-cols-3 items-end">
             <div className="space-y-1 sm:col-span-2">
-              <label>Area</label>
+              <label htmlFor="area">Area</label>
               <select 
+                id="area"
                 value={currentArea} 
                 onChange={(e) => setCurrentArea(e.target.value)}
               >
@@ -115,8 +116,9 @@ export default function ApplicantHomePage({
               </select>
             </div>
             <div className="space-y-1">
-              <label>Years</label>
+              <label htmlFor="years">Years</label>
               <input 
+                id="years"
                 type="number" 
                 value={experienceYears} 
                 onChange={(e) => setExperienceYears(e.target.value)}
@@ -169,8 +171,9 @@ export default function ApplicantHomePage({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1">
 
-              <label>Available From</label>
+              <label htmlFor="availableFrom">Available From</label>
               <input 
+                id="availableFrom"
                 type="date" 
                 value={availability.startDate}
                 onChange={(e) => setAvailability({...availability, startDate: e.target.value})}
@@ -178,8 +181,9 @@ export default function ApplicantHomePage({
               
             </div>
             <div className="space-y-1">
-              <label>Available Until</label>
+              <label htmlFor="availableUntil">Available Until</label>
               <input 
+                id="availableTo"
                 type="date" 
                 value={availability.endDate}
                 onChange={(e) => setAvailability({...availability, endDate: e.target.value})}
