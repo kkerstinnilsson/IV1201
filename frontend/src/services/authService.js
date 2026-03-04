@@ -5,6 +5,17 @@
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
+/**
+ * Register a new user account.
+ *
+ * @param {string} name
+ * @param {string} surname
+ * @param {string} email
+ * @param {string} pnr
+ * @param {string} username
+ * @param {string} password
+ * @returns {Promise<Object>}
+ */
 export async function register(name, surname, email, pnr, username, password) {
   const response = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
@@ -17,6 +28,46 @@ export async function register(name, surname, email, pnr, username, password) {
   if (!response.ok) {
     throw new Error(data?.message ?? `Response status: ${response.status}`);
   }
+  return data;
+}
+
+/**
+ * Request an account claim token by email.
+ *
+ * @param {string} email
+ * @returns {Promise<Object>}
+ */
+export async function requestAccountToken(email) {
+  const response = await fetch(`${API_BASE}/auth/account-token/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message ?? `Response status: ${response.status}`);
+  return data;
+}
+
+/**
+ * Claim an account using a token and set credentials.
+ *
+ * @param {string} token
+ * @param {string} username
+ * @param {string} password
+ * @returns {Promise<Object>}
+ */
+export async function claimAccountToken(token, username, password) {
+  const response = await fetch(`${API_BASE}/auth/account-token/claim/${token}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ username, password }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message ?? `Response status: ${response.status}`);
   return data;
 }
 

@@ -108,6 +108,23 @@ class UserDAO {
   }
 
   /**
+   * Creates credentials for an existing person.
+   * @param {number} personId
+   * @param {string} username
+   * @param {string} passwordHash
+   * @param {*} t Sequelize transaction (required)
+   * @returns {Promise<void>}
+   */
+  async createCredentialsForPerson(personId, username, passwordHash, t) {
+    if (!t) throw new Error('Transaction is required for createCredentialsForPerson');
+
+    await Credentials.create(
+      { person_id: personId, username, password: passwordHash },
+      { transaction: t },
+    );
+  }
+
+  /**
    * Creates a new applicant account within a transaction.
    * Rolls back if any insert fails.
    * @param {Object} userData
