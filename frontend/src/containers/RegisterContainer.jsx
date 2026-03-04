@@ -9,6 +9,7 @@ import RegisterPage from "../presentation/pages/RegisterPage";
 import { useState } from "react";
 import { register } from "../services/authService";
 import { useNavigate } from "react-router-dom";
+import { handleApiError } from "../utils/handleApiError";
 
 export default function RegisterContainer({ onRegisterSuccess }) {
 
@@ -32,8 +33,9 @@ export default function RegisterContainer({ onRegisterSuccess }) {
 
         onRegisterSuccess?.(data.user);
         navigate("/login", { state: { registered: true } });
-        } catch (err) {
-        setError(err?.message ?? 'Registration failed');
+        } catch (error) {
+        const message = handleApiError(error, "Registration failed");
+        setError(message);
         } finally {
         setLoading(false);
       }

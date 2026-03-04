@@ -1,95 +1,55 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+/**
+ * @file applicationService.js
+ * @description API client for job application endpoints.
+ */
+
+import { httpClient } from "./httpClient";
 
 /**
- * Fetches all applications from the backend.
+ * Fetch all applications (recruiter use).
+ *
  * @returns {Promise<Array<{id: number|string, firstName: string, lastName: string, status: string}>>}
- * @throws {Error} If the request fails.
+ *   List of all submitted applications.
+ * @throws {ApiError} If the request fails or the user is unauthorized.
  */
-export async function getAllApplications() {
-  const response = await fetch(`${API_BASE_URL}/applications`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(data?.message ?? `Response status: ${response.status}`);
-  }
-  return data;
-}
-
-
-/**
- * Submits a new application to the backend.
- * @param {Object} application - The application data
- * @param {Array<{area: string, years: number}>} application.expertiseList - List of expertise areas
- * @param {Object} application.availability - Availability range { startDate: string, endDate: string }
- * @returns {Promise<Object>} - The created application from backend
- * @throws {Error} If the request fails
- */
-export async function submitApplication({ expertiseList, availability }) {
-  const response = await fetch(`${API_BASE_URL}/applications`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      expertiseList,
-      availability,
-    }),
-  });
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(data?.message ?? `Response status: ${response.status}`);
-  }
-
-  return data;
+export function getAllApplications() {
+  return httpClient("/applications");
 }
 
 /**
- * Fetches the application status for the currently authenticated user.
- * @returns {{status}} The status information of the user's application True/False (Existing/Not Existing).
- * @throws {Error} If the request fails or unauthorized.
+ * Submit a new application for the currently authenticated user.
+ *
+ * @param {Object} application - The application payload.
+ * @param {Array<{area: string, years: number}>} application.expertiseList - Areas of expertise with years of experience.
+ * @param {{startDate: string, endDate: string}} application.availability - Desired availability date range.
+ * @returns {Promise<Object>} The created application as returned by the server.
+ * @throws {ApiError} If the request fails or validation errors occur.
  */
-export async function getApplicationStatus() {
-  const response = await fetch(`${API_BASE_URL}/applications/me/status`, {
-    credentials: "include",
+export function submitApplication({ expertiseList, availability }) {
+  return httpClient("/applications", {
+    method: "POST",
+    body: JSON.stringify({ expertiseList, availability }),
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.message ?? "Failed to fetch application status");
-  }
-
-  return data;
 }
 
+/**
+ * Fetch the application status for the currently authenticated user.
+ *
+ * @returns {Promise<{status: boolean}>} Whether the user has an existing application.
+ * @throws {ApiError} If the request fails or the user is unauthorized.
+ */
+export function getApplicationStatus() {
+  return httpClient("/applications/me/status");
+}
 
 /**
- * Deletes the currently authenticated user's application.
- * @returns {Promise<void>}
- * @throws {Error} If the request fails
+ * Delete the currently authenticated user's application.
+ *
+ * @returns {Promise<null>} Resolves with null on success (204 No Content).
+ * @throws {ApiError} If the request fails or the user is unauthorized.
  */
-export async function deleteApplication() {
-  const response = await fetch(`${API_BASE_URL}/applications/me`, {
+export function deleteApplication() {
+  return httpClient("/applications/me", {
     method: "DELETE",
-    credentials: "include",
   });
-
-  if (!response.ok) {
-    let data = null;
-    try {
-      data = await response.json();
-    } catch {
-      // ignore JSON parse errors for 204 responses
-    }
-
-    throw new Error(data?.message ?? `Response status: ${response.status}`);
-  }
 }
-

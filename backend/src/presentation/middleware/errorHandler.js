@@ -18,7 +18,7 @@ function errorHandler(err, req, res, next) {
 
   if (err instanceof AppError && err.isOperational) {
     return res.status(err.statusCode).json({
-      error: err.message,
+      message: err.message,
     });
   }
 

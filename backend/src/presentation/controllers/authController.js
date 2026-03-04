@@ -87,8 +87,7 @@ async function login(req, res) {
   const user = await authService.login(username, password);
 
   if (!user) {
-    // not revealing whether username or password was wrong
-    throw new ValidationError('Invalid credentials');
+    throw new AppError('Wrong username or password', 401);
   }
 
   // prevent session fixation
@@ -133,9 +132,8 @@ async function logout(req, res) {
  */
 async function me(req, res) {
   if (!req.session?.user) {
-    throw new ValidationError('Not authenticated', 401);
+    throw new AppError('Not authenticated', 401);
   }
-
   return res.json({ user: req.session.user });
 }
 

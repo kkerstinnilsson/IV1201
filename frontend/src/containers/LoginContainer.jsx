@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import LoginPage from '../presentation/pages/LoginPage';
 import { login } from '../services/authService';
+import { handleApiError } from "../utils/handleApiError";
 
 export default function LoginContainer({ onLoginSuccess }) {
     
@@ -19,8 +20,9 @@ export default function LoginContainer({ onLoginSuccess }) {
     try {
       const data = await login(username, password);
       onLoginSuccess(data.user);
-    } catch (err) {
-      setError(err?.message ?? 'Login failed');
+    } catch (error) {
+      const message = handleApiError(error, "Login failed");
+      setError(message);
     } finally {
       setLoading(false);
     }

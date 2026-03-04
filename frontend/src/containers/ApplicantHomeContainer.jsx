@@ -1,52 +1,69 @@
 /**
- * Container for applicant-only home view
+ * @file ApplicantHomeContainer.jsx
+ * @description Container component for the applicant home view.
+ * Manages multi-step application flow, expertise/availability state,
+ * and application status (submit, delete, check existing).
  */
+
 import { useState, useEffect } from 'react';
 import ApplicantHomePage from '../presentation/pages/ApplicantHomePage';
+import { handleApiError } from "../utils/handleApiError";
 import {
   submitApplication,
   getApplicationStatus,
   deleteApplication,
 } from '../services/applicationService';
 
+
+const ALL_AREAS = ['ticket sales', 'lotteries', 'roller coaster operation'];
+const INITIAL_AVAILABILITY = { startDate: '', endDate: '' };
+
+/**
+ * Manages state and business logic for the applicant home page.
+ *
+ * Step flow:
+ * - 1: Start
+ * - 2: Expertise
+ * - 3: Availability
+ * - 4: Review
+ * - 5: Submitted
+ * - 6: Already Exists
+ *
+ * @param {Object} props
+ * @param {{id: number, username: string, role: string}} props.user - The currently authenticated user.
+ * @returns {JSX.Element}
+ */
 export default function ApplicantHomeContainer({ user }) {
-
-  const ALL_AREAS = ['ticket sales', 'lotteries', 'roller coaster operation'];
-
-  const initialAvailability = { startDate: '', endDate: '' };
-  const [step, setStep] = useState(1); // 1: Start, 2: Expertise, 3: Availability, 4: Review, 5: Submitted, 6: Already Exists
+  const [step, setStep] = useState(1);
   const [expertiseList, setExpertiseList] = useState([]);
   const [currentArea, setCurrentArea] = useState('');
   const [experienceYears, setExperienceYears] = useState('');
-  const [availability, setAvailability] = useState(initialAvailability);
-
-  // Application status state
+  const [availability, setAvailability] = useState(INITIAL_AVAILABILITY);
+  const [actionError, setActionError] = useState(null); 
   const [applicationStatus, setApplicationStatus] = useState({
     loading: true,
     hasApplication: false,
     error: null,
   });
 
-  // Fetch application status on page load
+
   useEffect(() => {
     const fetchStatus = async () => {
       try {
         const status = await getApplicationStatus();
-
         setApplicationStatus({
           loading: false,
           hasApplication: status.hasApplication,
           error: null,
         });
-
         if (status.hasApplication) {
           setStep(6);
         }
-      } catch (err) {
+      } catch (error) {
         setApplicationStatus({
           loading: false,
           hasApplication: false,
-          error: err.message,
+          error: handleApiError(error, "Failed to fetch application status"),
         });
       }
     };
@@ -54,30 +71,43 @@ export default function ApplicantHomeContainer({ user }) {
     fetchStatus();
   }, []);
 
-  // Delete existing application
+  /**
+   * Deletes the user's existing application and resets the form to step 1.
+   *
+   * @returns {Promise<void>}
+   */
   const handleDeleteApplication = async () => {
-
+    setActionError(null);
     try {
       await deleteApplication();
-
-      setApplicationStatus({
-        loading: false,
-        hasApplication: false,
-        error: null,
-      });
-
+      setApplicationStatus({ loading: false, hasApplication: false, error: null });
       reset();
-    } catch (err) {
-      alert(`Failed to delete application: ${err.message}`);
+    } catch (error) {
+      setActionError(handleApiError(error, "Failed to delete application"));
     }
   };
 
-  // Filter out areas already added
-  const availableAreas = ALL_AREAS.filter(
-    (area) => !expertiseList.some((item) => item.area === area)
-  );
+  /**
+   * Submits the current expertise list and availability to the API.
+   * Advances to step 5 on success.
+   *
+   * @returns {Promise<void>}
+   */
+  const handleSubmitApplication = async () => {
+    setActionError(null);
+    try {
+      await submitApplication({ expertiseList, availability });
+      setStep(5);
+    } catch (error) {
+      setActionError(handleApiError(error, "Submission failed"));
+    }
+  };
 
-  // Add expertise to list
+  /**
+   * Adds a new expertise entry to the list if area and years are both set.
+   *
+   * @param {React.FormEvent} e - The form submit event.
+   */
   const handleAddExpertise = (e) => {
     e.preventDefault();
     if (!currentArea || experienceYears === '') return;
@@ -86,24 +116,19 @@ export default function ApplicantHomeContainer({ user }) {
     setExperienceYears('');
   };
 
-  // Reset all state
+ 
   const reset = () => {
     setStep(1);
     setExpertiseList([]);
     setCurrentArea('');
     setExperienceYears('');
-    setAvailability(initialAvailability);
+    setAvailability(INITIAL_AVAILABILITY);
   };
 
-  // Submit application 
-  const handleSubmitApplication = async () => {
-    try {
-      await submitApplication({ expertiseList, availability });
-      setStep(5);
-    } catch (err) {
-      alert(`Submission failed: ${err.message}`);
-    }
-  };
+
+  const availableAreas = ALL_AREAS.filter(
+    (area) => !expertiseList.some((item) => item.area === area)
+  );
 
   return (
     <ApplicantHomePage
@@ -124,6 +149,7 @@ export default function ApplicantHomeContainer({ user }) {
       handleDeleteApplication={handleDeleteApplication}
       handleSubmitApplication={handleSubmitApplication}
       reset={reset}
+      actionError={actionError}
     />
   );
 }
