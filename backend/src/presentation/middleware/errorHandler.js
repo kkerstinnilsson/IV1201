@@ -18,13 +18,14 @@ function errorHandler(err, req, res, next) {
 
   if (err instanceof AppError && err.isOperational) {
     return res.status(err.statusCode).json({
-      error: err.message,
+      message: err.message,
+      ...(err.details ? err.details : {}),
     });
   }
 
   // Unknown / programmer error
   return res.status(500).json({
-    error: 'Internal Server Error',
+    message: 'Internal Server Error',
   });
 }
 

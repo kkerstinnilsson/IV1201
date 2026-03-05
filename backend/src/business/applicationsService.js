@@ -42,7 +42,7 @@ async function submitApplication(userId, expertiseList, availabilityList) {
     return await sequelize.transaction(async (t) => {
       const alreadyExists = await dao.hasApplication(userId, t);
       if (alreadyExists) {
-        throw new ValidationError('Application already exists for this user');
+        throw new ValidationError('Application already exists for this user', 409);
       }
       await dao.createApplication(userId, t);
       // eslint-disable-next-line no-restricted-syntax

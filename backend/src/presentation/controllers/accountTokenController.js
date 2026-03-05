@@ -4,7 +4,9 @@
  */
 
 const accountTokenService = require('../../business/accountTokenService');
-const { sendValidationError, validateEmail, validateMinLen } = require('../utils/validate');
+const { validateEmail, validateMinLen } = require('../utils/validate');
+
+const { ValidationError } = require('../../business/errors/AppError');
 
 /**
  * Handles request for account claim token.
@@ -19,25 +21,15 @@ async function requestAccountToken(req, res) {
   validateEmail(email, missing, invalid);
 
   if (missing.length || invalid.length) {
-    return sendValidationError(res, missing, invalid);
+    throw new ValidationError('Validation failed', 400, { missing, invalid });
   }
 
-  try {
-    const result = await accountTokenService.requestAccountToken(email);
+  const result = await accountTokenService.requestAccountToken(email);
 
-    return res.status(200).json({
-      message: 'token link generated',
-      data: result, // { email, link, expiresAt }
-    });
-  } catch (err) {
-    if (err.code === 'EMAIL_NOT_FOUND') {
-      return res.status(404).json({ message: err.message, code: err.code });
-    }
-    if (err.code === 'ALREADY_HAS_CREDENTIALS') {
-      return res.status(409).json({ message: err.message, code: err.code });
-    }
-    return res.status(500).json({ message: 'token request failed' });
-  }
+  return res.status(200).json({
+    message: 'token link generated',
+    data: result,
+  });
 }
 
 /**
@@ -56,28 +48,15 @@ async function claimAccountToken(req, res) {
   validateMinLen(password, 6, 'password', missing, invalid);
 
   if (missing.length || invalid.length) {
-    return sendValidationError(res, missing, invalid);
+    throw new ValidationError('Validation failed');
   }
 
-  try {
-    const result = await accountTokenService.claimAccountToken(token, username, password);
+  const result = await accountTokenService.claimAccountToken(token, username, password);
 
-    return res.status(201).json({
-      message: 'account claimed',
-      user: result, // { id, username }
-    });
-  } catch (err) {
-    if (err.code === 'TOKEN_INVALID') {
-      return res.status(400).json({ message: err.message, code: err.code });
-    }
-    if (err.code === 'USERNAME_TAKEN') {
-      return res.status(409).json({ message: err.message, code: err.code });
-    }
-    if (err.code === 'ALREADY_HAS_CREDENTIALS') {
-      return res.status(409).json({ message: err.message, code: err.code });
-    }
-    return res.status(500).json({ message: 'claim failed' });
-  }
+  return res.status(201).json({
+    message: 'account claimed',
+    user: result,
+  });
 }
 
 module.exports = { requestAccountToken, claimAccountToken };
