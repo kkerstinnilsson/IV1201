@@ -131,3 +131,4 @@ docker exec -it recruitment-backend-dev npx sequelize-cli db:migrate
 | `cd backend && npm test` | Run backend unit tests |
 | `cd backend && npm run lint` | Run ESLint |
 | `cd e2e && npx playwright test` | Run Playwright acceptance tests |
+
