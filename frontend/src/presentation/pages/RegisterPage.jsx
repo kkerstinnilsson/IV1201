@@ -1,32 +1,9 @@
-/**
- * @file RegisterPage.jsx
- * @description Presentation component for the registration form.
- * Handles client-side validation using React Hook Form and Zod.
- */
-
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { registerSchema} from "../../validation/authSchemas";
 
 /**
- * Zod schema defining validation rules
- * for the registration form.
- */
-const registerSchema = z.object({
-  name: z.string().min(1, "Please enter your name"),
-  surname: z.string().min(1, "Please enter your surname"),
-  email: z.string().min(1, "Please enter an email address")
-    .email("Please enter a valid email address"),
-  pnr: z
-    .string()
-    .min(1, "Please enter your personal number")
-    .regex(/^\d{8}-\d{4}$/, "Use format YYYYMMDD-XXXX"),
-  username: z.string().min(1, "Please enter a username").min(3, "Username must be at least 3 characters"),
-  password: z.string().min(1, "Please enter a password").min(6, "Password must be at least 6 characters"),
-});
-
-/**
- * Component for registration.
+ * Registration page
  *
  * @param {boolean} loading - Loading state.
  * @param {string|null} error - Error message returned from the backend.

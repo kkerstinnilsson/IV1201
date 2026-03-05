@@ -36,8 +36,9 @@ class NotFoundError extends AppError {
  * Client validation errors
  */
 class ValidationError extends AppError {
-  constructor(message = 'Invalid input') {
-    super(message, 400);
+  constructor(message = 'Invalid input', statusCode = 400, details = null) {
+    super(message, statusCode);
+    this.details = details;
   }
 }
 

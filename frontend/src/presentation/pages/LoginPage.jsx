@@ -1,30 +1,30 @@
-/**
- * @file LoginPage.jsx
- * @description Presentation component for login.
- * 
- */
-
-import { useState } from 'react';
 import { Link, useLocation } from "react-router-dom";
 import { FcOk } from "react-icons/fc";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema } from "../../validation/authSchemas";
 
 /**
- * Component for the login form.
+ * Login page
  *
  * @param {boolean} loading - Loading state.
  * @param {string|null} error - Error message returned from the backend.
- * @param {(payload: {username: string, password: string}) => void} onLogin - Callback to login
+ * @param {(payload: {username: string, password: string}) => void} onLogin - Callback to login.
  */
 export default function LoginPage({ loading, error, onLogin }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-
   const location = useLocation();
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    onLogin({ username, password });
-  }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { username: "", password: "" },
+    mode: "onSubmit",
+  });
+
+  const disabled = loading || isSubmitting;
 
 
   return (
@@ -39,17 +39,25 @@ export default function LoginPage({ loading, error, onLogin }) {
             <span>Account created successfully.</span>
           </div>
         )}
+        {location.state?.claimed && (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+            <FcOk className="text-xl" />
+            <span>Account claimed successfully.</span>
+          </div>
+        )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onLogin)} noValidate className="space-y-4">
           <div className="space-y-1">
             <label htmlFor="username">Username</label>
             <input
               id="username"
               autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              {...register("username")}
             />
+              {errors.username && (
+               <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -57,18 +65,19 @@ export default function LoginPage({ loading, error, onLogin }) {
             <input
               id="password"
               autoComplete="current-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type="password" {...register("password")} 
             />
+              {errors.password && (
+              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+            )}
           </div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={disabled}
             className="btn-primary w-full"
           >
-            {loading ? 'Logging in…' : 'Login'}
+            {disabled ? 'Logging in…' : 'Login'}
           </button>
         </form>
 
@@ -86,6 +95,13 @@ export default function LoginPage({ loading, error, onLogin }) {
             >
               Register here!
             </Link>
+            </p>
+
+            <p className="mt-2">
+              Old account?{" "}
+              <Link to="/claim/request" className="text-blue-600 hover:underline font-medium">
+                Set username/password
+              </Link>
             </p>
         </div>
       </div>

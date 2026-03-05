@@ -8,6 +8,22 @@ import {
   getApplicationStatus,
   deleteApplication,
 } from '../services/applicationService';
+import { expertiseItemSchema, availabilitySchema } from "../validation/applicationSchemas";
+
+// helper that convers zod error to a { fieldName: message } object for UI
+function zodToFieldErrors(zodError) {
+  const fieldErrors = {};
+
+  zodError.issues.forEach((issue) => {
+    const field = issue.path[0];
+
+    if (!fieldErrors[field]) {
+      fieldErrors[field] = issue.message;
+    }
+  });
+
+  return fieldErrors;
+}
 
 export default function ApplicantHomeContainer({ user }) {
 
@@ -25,6 +41,12 @@ export default function ApplicantHomeContainer({ user }) {
     loading: true,
     hasApplication: false,
     error: null,
+  });
+
+  const [errors, setErrors] = useState({
+    expertise: {},
+    availability: {},
+    submit: null,
   });
 
   // Fetch application status on page load
@@ -59,16 +81,14 @@ export default function ApplicantHomeContainer({ user }) {
 
     try {
       await deleteApplication();
-
       setApplicationStatus({
         loading: false,
         hasApplication: false,
         error: null,
       });
-
       reset();
     } catch (err) {
-      alert(`Failed to delete application: ${err.message}`);
+      setErrors((prev) => ({ ...prev, submit: err.message }));
     }
   };
 
@@ -80,10 +100,32 @@ export default function ApplicantHomeContainer({ user }) {
   // Add expertise to list
   const handleAddExpertise = (e) => {
     e.preventDefault();
-    if (!currentArea || experienceYears === '') return;
-    setExpertiseList([...expertiseList, { area: currentArea, years: experienceYears }]);
+     setErrors((prev) => ({ ...prev, expertise: {}, submit: null }));
+
+    const parsed = expertiseItemSchema.safeParse({
+      area: currentArea,
+      years: experienceYears,
+    });
+
+    if (!parsed.success) {
+      setErrors((prev) => ({ ...prev, expertise: zodToFieldErrors(parsed.error) }));
+      return;
+    }
+
+    setExpertiseList([...expertiseList, parsed.data]);
     setCurrentArea('');
     setExperienceYears('');
+  };
+
+  const goToReview = () => {
+    setErrors((prev) => ({ ...prev, availability: {}, submit: null }));
+
+    const parsed = availabilitySchema.safeParse(availability);
+    if (!parsed.success) {
+      setErrors((prev) => ({ ...prev, availability: zodToFieldErrors(parsed.error) }));
+      return;
+    }
+    setStep(4);
   };
 
   // Reset all state
@@ -93,17 +135,20 @@ export default function ApplicantHomeContainer({ user }) {
     setCurrentArea('');
     setExperienceYears('');
     setAvailability(initialAvailability);
+    setErrors({ expertise: {}, availability: {}, submit: null });
   };
 
   // Submit application 
   const handleSubmitApplication = async () => {
-    try {
-      await submitApplication({ expertiseList, availability });
-      setStep(5);
-    } catch (err) {
-      alert(`Submission failed: ${err.message}`);
-    }
-  };
+  setErrors((prev) => ({ ...prev, submit: null }));
+
+  try {
+    await submitApplication({expertiseList, availability});
+    setStep(5);
+  } catch (err) {
+    setErrors((prev) => ({ ...prev, submit: err.message }));
+  }
+};
 
   return (
     <ApplicantHomePage
@@ -124,6 +169,9 @@ export default function ApplicantHomeContainer({ user }) {
       handleDeleteApplication={handleDeleteApplication}
       handleSubmitApplication={handleSubmitApplication}
       reset={reset}
+      errors={errors}
+      goToReview={goToReview}
+
     />
   );
 }

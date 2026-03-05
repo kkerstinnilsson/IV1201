@@ -9,6 +9,11 @@ const {
   ValidationError,
 } = require('../../business/errors/AppError');
 
+const {
+  validateNonEmptyArray,
+  validateDateRange,
+} = require('../utils/validate');
+
 /**
  * GET /applications
  * Fetch all applications
@@ -17,8 +22,7 @@ async function listApplications(req, res) {
   console.log('applicationsController: GET /applications hit');
 
   const applications = await applicationsService.getAllApplications();
-
-  res.status(200).json(applications);
+  return res.status(200).json(applications);
 }
 
 /**
@@ -29,14 +33,30 @@ async function listApplications(req, res) {
 async function submitApplication(req, res) {
   console.log('applicationsController: POST /applications hit');
 
-  const { expertiseList, availability } = req.body;
+  const { expertiseList, availability } = req.body ?? {};
   const userId = req.session.user.id;
 
-  if (!expertiseList || expertiseList.length === 0) {
-    throw new ValidationError('Expertise list is required');
+  const missing = [];
+  const invalid = [];
+
+  validateNonEmptyArray(expertiseList, 'expertiseList', missing, invalid);
+
+  if (!availability) {
+    missing.push('availability');
+  } else {
+    validateDateRange(
+      availability.startDate,
+      availability.endDate,
+      'startDate',
+      'endDate',
+      'availability',
+      missing,
+      invalid,
+    );
   }
-  if (!availability?.startDate || !availability?.endDate) {
-    throw new ValidationError('Availability is required');
+
+  if (missing.length || invalid.length) {
+    throw new ValidationError('Validation failed', 400, { missing, invalid });
   }
 
   const application = await applicationsService.submitApplication(
@@ -45,7 +65,7 @@ async function submitApplication(req, res) {
     [availability],
   );
 
-  res.status(201).json(application);
+  return res.status(201).json(application);
 }
 
 /**
@@ -54,12 +74,9 @@ async function submitApplication(req, res) {
  */
 async function getApplicationStatus(req, res) {
   console.log('applicationsController: GET /applications/me/status hit');
-
   const userId = req.session.user.id;
-
   const status = await applicationsService.getApplicationStatus(userId);
-
-  res.status(200).json(status);
+  return res.status(200).json(status);
 }
 
 /**
@@ -68,12 +85,9 @@ async function getApplicationStatus(req, res) {
  */
 async function deleteApplication(req, res) {
   console.log('applicationsController: DELETE /applications/me hit');
-
   const userId = req.session.user.id;
-
   await applicationsService.deleteApplication(userId);
-
-  res.status(204).end();
+  return res.status(204).end();
 }
 
 module.exports = {

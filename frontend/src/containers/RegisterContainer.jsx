@@ -1,6 +1,5 @@
 /**
- * @file RegisterContainer.jsx
- * @description Container component responsible for handling
+ * Container component responsible for handling
  * registration logic, API communication and navigation.
  * 
  */

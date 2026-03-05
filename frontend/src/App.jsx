@@ -11,6 +11,7 @@ import LoginContainer from './containers/LoginContainer';
 import Layout from './presentation/components/Layout';
 import useAuth from './hooks/useAuth';
 import RegisterContainer from './containers/RegisterContainer';
+import ClaimContainer from './containers/ClaimContainer';
 
 
 /**
@@ -44,6 +45,24 @@ const { user, setUser, checkingSession, handleLogout } = useAuth();
             user
               ? <Navigate to={user.role === 'recruiter' ? '/recruiter' : '/applicant'} replace />
               : <RegisterContainer />
+          }
+        />
+
+        <Route
+          path="/claim/request"
+          element={
+            user
+              ? <Navigate to={user.role === 'recruiter' ? '/recruiter' : '/applicant'} replace />
+              : <ClaimContainer />
+          }
+        />
+
+        <Route
+          path="/claim/:token"
+          element={
+            user
+              ? <Navigate to={user.role === 'recruiter' ? '/recruiter' : '/applicant'} replace />
+              : <ClaimContainer />
           }
         />
 

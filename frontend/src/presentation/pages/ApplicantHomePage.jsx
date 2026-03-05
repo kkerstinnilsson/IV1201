@@ -31,6 +31,7 @@ import { useState } from 'react';
 import { HiArrowLeft } from 'react-icons/hi2';
 import Modal from '../components/Modal';
 
+
 function BackButton({ onClick }) {
   return (
     <button
@@ -62,6 +63,8 @@ export default function ApplicantHomePage({
   handleDeleteApplication,
   handleSubmitApplication,
   reset,
+  errors,
+  goToReview,
 }) {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -70,6 +73,7 @@ export default function ApplicantHomePage({
   return (
     <div>
       <div className="container space-y-6">
+      {errors?.submit && <p className="error-box mb-4">{errors.submit}</p>}
       <header className="space-y-1">
         <h1>Applicant Portal</h1>
         <p className="text-gray-700 mt-4">Here you can submit your application to work at the amusement park. The process will guide you through a few simple steps where you add your
@@ -103,7 +107,7 @@ export default function ApplicantHomePage({
           <h2>Step 1: Enter Your Expertise</h2>
           <BackButton onClick={() => setStep(1)} />
           </div>
-          <form onSubmit={handleAddExpertise} className="grid gap-4 sm:grid-cols-3 items-end">
+          <form onSubmit={handleAddExpertise} className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1 sm:col-span-2">
               <label htmlFor="area">Area</label>
               <select 
@@ -114,6 +118,9 @@ export default function ApplicantHomePage({
                 <option value="">Select Area...</option>
                 {availableAreas.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
+                {errors?.expertise?.area && (
+                <p className="mt-1 text-sm text-red-600">{errors.expertise.area}</p>
+              )}
             </div>
             <div className="space-y-1">
               <label htmlFor="years">Years</label>
@@ -124,6 +131,9 @@ export default function ApplicantHomePage({
                 onChange={(e) => setExperienceYears(e.target.value)}
                 placeholder="0"
               />
+                {errors?.expertise?.years && (
+                <p className="mt-1 text-sm text-red-600">{errors.expertise.years}</p>
+              )}
             </div>
             <button type="submit" className="btn-secondary w-fit mt-4 col-start-3 justify-self-end">+ Add to List</button>
           </form>
@@ -178,6 +188,9 @@ export default function ApplicantHomePage({
                 value={availability.startDate}
                 onChange={(e) => setAvailability({...availability, startDate: e.target.value})}
               />
+                {errors?.availability?.startDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.availability.startDate}</p>
+              )}
               
             </div>
             <div className="space-y-1">
@@ -188,14 +201,16 @@ export default function ApplicantHomePage({
                 value={availability.endDate}
                 onChange={(e) => setAvailability({...availability, endDate: e.target.value})}
               />
+              {errors?.availability?.endDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.availability.endDate}</p>
+              )}
             </div>
             </div>
 
             <div className="flex justify-end pt-6">
               <button 
                 className="btn-primary"
-                disabled={!availability.startDate || !availability.endDate}
-                onClick={() => setStep(4)}
+                onClick={goToReview}
               >
                 Continue to Review
               </button>
