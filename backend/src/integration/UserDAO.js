@@ -150,6 +150,40 @@ class UserDAO {
       throw new DatabaseError('Failed to create applicant account', error);
     }
   }
+
+    /**
+   * Deletes credentials by username.
+   * @param {string} username
+   * @returns {Promise<void>}
+   */
+  async deleteCredentialsByUsername(username) {
+    try {
+      await Credentials.destroy({
+        where: { username },
+      });
+    } catch (error) {
+      throw new DatabaseError('Failed to delete credentials by username', error);
+    }
+  }
+
+  /**
+   * Deletes credentials and person by username.
+   * @param {string} username
+   * @returns {Promise<void>}
+   */
+  async deleteAccountByUsername(username) {
+    try {
+      const cred = await Credentials.findOne({
+        where: { username },
+        attributes: ['person_id'],
+      });
+      if (!cred) return;
+      await Credentials.destroy({ where: { username } });
+      await Person.destroy({ where: { person_id: cred.person_id } });
+    } catch (error) {
+      throw new DatabaseError('Failed to delete account by username', error);
+    }
+  }
 }
 
 module.exports = UserDAO;
