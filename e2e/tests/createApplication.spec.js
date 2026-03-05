@@ -24,24 +24,34 @@ test('applicant can submit an application', async ({ page }) => {
   }
 
   // Start new application
+  await beginButton.waitFor({ state: 'visible' });
   await beginButton.click();
 
   // Step 1: Add expertise
   await page.getByLabel('Area').selectOption('ticket sales');
   await page.getByLabel('Years').fill('3');
-  await page.getByRole('button', { name: '+ Add to List' }).click();
+  const addButton = page.getByRole('button', { name: '+ Add to List' });
+  await addButton.waitFor({ state: 'visible' });
+  await addButton.click();
   await expect(page.getByText('ticket sales — 3 Years')).toBeVisible();
-  await page.getByRole('button', { name: 'Next: Set Availability' }).click();
+
+  const nextButton = page.getByRole('button', { name: 'Next: Set Availability' });
+  await nextButton.waitFor({ state: 'visible' });
+  await nextButton.click();
 
   // Step 2: Set availability
   await page.getByLabel('Available From').fill('2026-06-01');
   await page.getByLabel('Available Until').fill('2026-07-01');
-  await page.getByRole('button', { name: 'Continue to Review' }).click();
+  const continueButton = page.getByRole('button', { name: 'Continue to Review' });
+  await continueButton.waitFor({ state: 'visible' });
+  await continueButton.click();
 
   // Step 3: Review and submit
   await expect(page.getByText('ticket sales — 3 Years')).toBeVisible();
   await expect(page.getByText('2026-06-01 to 2026-07-01')).toBeVisible();
-  await page.getByRole('button', { name: 'Submit Application' }).click();
+  const submitButton = page.getByRole('button', { name: 'Submit Application' });
+  await submitButton.waitFor({ state: 'visible' });
+  await submitButton.click();
 
   // Assert success
   await expect(page.getByText('Thank you for your submission!')).toBeVisible();
