@@ -168,7 +168,7 @@ class UserDAO {
     }
   }
 
-    /**
+  /**
    * Deletes credentials by username.
    * @param {string} username
    * @returns {Promise<void>}
