@@ -34,6 +34,7 @@ test('create account successfully', async ({ page }) => {
   await page.getByLabel('Password').fill('testpass123');
   await page.getByRole('button', { name: 'Register' }).click();
 
+  await expect(page).getByText('Account created successfully.').toBeVisible();
   await expect(page).toHaveURL(/\/login/);
 });
 
@@ -42,6 +43,12 @@ test('create account with missing fields shows error', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Register' }).click();
 
+  await expect(page).getByText('Please enter your name').toBeVisible();
+  await expect(page).getByText('Please enter your surname').toBeVisible();
+  await expect(page).getByText('Please enter an email address').toBeVisible();
+  await expect(page).getByText('Please enter your personal number').toBeVisible();
+  await expect(page).getByText('Please enter a username').toBeVisible();
+  await expect(page).getByText('Please enter a password').toBeVisible();
   await expect(page).toHaveURL(/\/register/);
 });
 
@@ -56,5 +63,6 @@ test('create account with duplicate username shows error', async ({ page }) => {
   await page.getByLabel('Password').fill('testpass123');
   await page.getByRole('button', { name: 'Register' }).click();
 
+  await expect(page).getByText('Username already exists').toBeVisible();
   await expect(page).toHaveURL(/\/register/);
 });
