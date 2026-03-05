@@ -3,6 +3,8 @@
  */
 import { test, expect, request } from '@playwright/test';
 
+test.describe.configure({ mode: 'serial' });
+
 const TEST_USERNAME = 'testmagiclink';
 const TEST_EMAIL = 'mbarr@finnsinte.se';
 const BACKEND_URL = 'http://16.171.147.183:3000';
@@ -28,7 +30,7 @@ test('request magic link shows confirmation message', async ({ page }) => {
   await page.goto('./claim/request');
 
   await page.getByLabel('Email').fill(TEST_EMAIL);
-  await page.getByRole('button', { name: 'Check your email' }).click();
+  await page.getByRole('button', { name: 'Send link' }).click();
 
   await expect(page.getByText('If an account exists for this email address, you will receive a link to set your username and password.')).toBeVisible();
 });
@@ -47,8 +49,9 @@ test('claim account with magic link', async ({ page }) => {
 
   await page.getByLabel('Username').fill(TEST_USERNAME);
   await page.getByLabel('Password').fill('testpass123');
-  await page.getByRole('button', { name: 'Set username/password' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
 
+  await page.waitForURL(/\/login/);
   await expect(page).toHaveURL(/\/login/);
 });
 
@@ -65,7 +68,7 @@ test('claim account then login with new credentials', async ({ page }) => {
   await page.goto(link);
   await page.getByLabel('Username').fill(TEST_USERNAME);
   await page.getByLabel('Password').fill('testpass123');
-  await page.getByRole('button', { name: 'Set username/password' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
 
   await page.waitForURL(/\/login/);
 
@@ -73,5 +76,6 @@ test('claim account then login with new credentials', async ({ page }) => {
   await page.getByLabel('Password').fill('testpass123');
   await page.getByRole('button', { name: 'Login' }).click();
 
+  await page.waitForURL(/\/applicant/);
   await expect(page).toHaveURL(/\/applicant/);
 });
