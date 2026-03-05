@@ -35,15 +35,15 @@ async function register(data) {
   try {
     return await sequelize.transaction(async (t) => {
       if (await userDAO.usernameExists(username, t)) {
-        throw new ValidationError('Username already exists');
+        throw new ValidationError('Username already exists', 409);
       }
 
       if (await userDAO.emailExists(email, t)) {
-        throw new ValidationError('Email already exists');
+        throw new ValidationError('Email already exists', 409);
       }
 
       if (await userDAO.pnrExists(pnr, t)) {
-        throw new ValidationError('Personal number already exists');
+        throw new ValidationError('Personal number already exists', 409);
       }
 
       const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);

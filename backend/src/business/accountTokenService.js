@@ -9,6 +9,12 @@ const { sequelize } = require('../../models');
 const AccountTokenDAO = require('../integration/AccountTokenDAO');
 const UserDAO = require('../integration/UserDAO');
 
+const {
+  AppError,
+  ValidationError,
+  NotFoundError,
+} = require('./errors/AppError');
+
 const accountTokenDAO = new AccountTokenDAO();
 const userDAO = new UserDAO();
 
@@ -34,16 +40,12 @@ async function requestAccountToken(email) {
   return sequelize.transaction(async (t) => {
     const person = await accountTokenDAO.findApplicantByEmail(email, t);
     if (!person) {
-      const err = new Error('email not found');
-      err.code = 'EMAIL_NOT_FOUND';
-      throw err;
+      throw new NotFoundError('Email not found');
     }
 
     // Only applicants without credentials can request a token
     if (await accountTokenDAO.personHasCredentials(person.person_id, t)) {
-      const err = new Error('already has credentials');
-      err.code = 'ALREADY_HAS_CREDENTIALS';
-      throw err;
+      throw new AppError('Already has credentials', 409);
     }
 
     const token = randomToken();
@@ -79,23 +81,17 @@ async function claimAccountToken(token, username, password) {
   return sequelize.transaction(async (t) => {
     const tokenRow = await accountTokenDAO.findValidTokenByHash(tokenHash, t);
     if (!tokenRow) {
-      const err = new Error('invalid/expired/used token');
-      err.code = 'TOKEN_INVALID';
-      throw err;
+      throw new ValidationError('Invalid or expired token');
     }
 
     // Ensure username is unique
     if (await userDAO.usernameExists(username, t)) {
-      const err = new Error('username already exists');
-      err.code = 'USERNAME_TAKEN';
-      throw err;
+      throw new AppError('Username already exists', 409);
     }
 
     // Ensure person still doesn't have credentials
     if (await accountTokenDAO.personHasCredentials(tokenRow.person_id, t)) {
-      const err = new Error('already has credentials');
-      err.code = 'ALREADY_HAS_CREDENTIALS';
-      throw err;
+      throw new AppError('Already has credentials', 409);
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);

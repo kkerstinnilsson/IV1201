@@ -63,14 +63,14 @@ async function login(req, res) {
   const { username, password } = req.body ?? {};
 
   if (!username || !password) {
-    throw new ValidationError('Username and password are required');
+    throw new ValidationError('Username and password are required', 400);
   }
 
   const user = await authService.login(username, password);
 
   if (!user) {
     // not revealing whether username or password was wrong
-    throw new ValidationError('Invalid credentials');
+    throw new ValidationError('Invalid credentials', 401);
   }
 
   // prevent session fixation
