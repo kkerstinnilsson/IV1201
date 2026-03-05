@@ -31,7 +31,7 @@ test('create account successfully', async ({ page }) => {
   await page.getByLabel('Name', { exact: true }).fill('Test');
   await page.getByLabel('Surname').fill('User');
   await page.getByLabel('Email').fill('testcreateaccount@test.com');
-  await page.getByLabel('Personal Number').fill('199001010000');
+  await page.getByLabel('Personal Number').fill('19900101-0000');
   await page.getByLabel('Username').fill(TEST_USERNAME);
   await page.getByLabel('Password').fill('testpass123');
   await page.getByRole('button', { name: 'Register' }).click();
