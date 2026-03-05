@@ -37,8 +37,8 @@ export default function ClaimRequestPage({ loading, error, onSubmit, submitted }
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
               <div className="space-y-1">
-                <label>Email</label>
-                <input type="email" autoComplete="email" {...register("email")} />
+                <label htmlFor="email">Email</label>
+                <input type="email" id="email" autoComplete="email" {...register("email")} />
                   {errors.email && (
                     <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
                   )}

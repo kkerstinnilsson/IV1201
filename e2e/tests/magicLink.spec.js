@@ -1,0 +1,77 @@
+/**
+ * File for testing magic link (claim existing account) flow.
+ */
+import { test, expect, request } from '@playwright/test';
+
+const TEST_USERNAME = 'testmagiclink';
+const TEST_EMAIL = 'mbarr@finnsinte.se';
+const BACKEND_URL = 'http://16.171.147.183:3000';
+
+async function deleteCredentials() {
+  const context = await request.newContext();
+  await context.delete(
+    `${BACKEND_URL}/test/delete-credentials?username=${TEST_USERNAME}`,
+    { headers: { 'x-test-secret': process.env.TEST_SECRET } },
+  );
+  await context.dispose();
+}
+
+test.beforeEach(async () => {
+  await deleteCredentials();
+});
+
+test.afterEach(async () => {
+  await deleteCredentials();
+});
+
+test('request magic link shows confirmation message', async ({ page }) => {
+  await page.goto('./claim/request');
+
+  await page.getByLabel('Email').fill(TEST_EMAIL);
+  await page.getByRole('button', { name: 'Check your email' }).click();
+
+  await expect(page.getByText('If an account exists for this email address, you will receive a link to set your username and password.')).toBeVisible();
+});
+
+test('claim account with magic link', async ({ page }) => {
+  const context = await request.newContext();
+  const response = await context.post(
+    `${BACKEND_URL}/auth/account-token/request`,
+    { data: { email: TEST_EMAIL } },
+  );
+  const body = await response.json();
+  const { link } = body.data;
+  await context.dispose();
+
+  await page.goto(link);
+
+  await page.getByLabel('Username').fill(TEST_USERNAME);
+  await page.getByLabel('Password').fill('testpass123');
+  await page.getByRole('button', { name: 'Set username/password' }).click();
+
+  await expect(page).toHaveURL(/\/login/);
+});
+
+test('claim account then login with new credentials', async ({ page }) => {
+  const context = await request.newContext();
+  const response = await context.post(
+    `${BACKEND_URL}/auth/account-token/request`,
+    { data: { email: TEST_EMAIL } },
+  );
+  const body = await response.json();
+  const { link } = body.data;
+  await context.dispose();
+
+  await page.goto(link);
+  await page.getByLabel('Username').fill(TEST_USERNAME);
+  await page.getByLabel('Password').fill('testpass123');
+  await page.getByRole('button', { name: 'Set username/password' }).click();
+
+  await page.waitForURL(/\/login/);
+
+  await page.getByLabel('Username').fill(TEST_USERNAME);
+  await page.getByLabel('Password').fill('testpass123');
+  await page.getByRole('button', { name: 'Login' }).click();
+
+  await expect(page).toHaveURL(/\/applicant/);
+});

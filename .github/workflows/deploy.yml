@@ -71,3 +71,32 @@ jobs:
           service: ${{ secrets.ECS_SERVICE }}
           cluster: ${{ secrets.ECS_CLUSTER }}
           wait-for-service-stability: true
+      
+  acceptance-tests:
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: cd e2e && npm install
+        
+      - name: Install Playwright browsers
+        run: cd e2e && npx npx playwright install --with-deps
+        
+      - name: Run Acceptance tests
+        env:
+          RECRUITER_USERNAME: ${{ secrets.RECRUITER_USERNAME }}
+          RECRUITER_PASSWORD: ${{ secrets.RECRUITER_PASSWORD }}
+          APPLICANT_USERNAME: ${{ secrets.APPLICANT_USERNAME }}
+          APPLICANT_PASSWORD: ${{ secrets.APPLICANT_PASSWORD }}
+        run: |
+          cd e2e
+          npx playwright test

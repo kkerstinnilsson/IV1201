@@ -41,16 +41,16 @@ export default function RegisterPage({ loading, error, onRegister }) {
           {/* Row 1 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label>Name</label>
-              <input {...register("name")} />
+              <label htmlFor="name">Name</label>
+              <input id="name" {...register("name")} />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
               )}
             </div>
 
             <div>
-              <label>Surname</label>
-              <input {...register("surname")} />
+              <label htmlFor="surname">Surname</label>
+              <input id="surname" {...register("surname")} />
               {errors.surname && (
                 <p className="mt-1 text-sm text-red-600">{errors.surname.message}</p>
               )}
@@ -60,16 +60,17 @@ export default function RegisterPage({ loading, error, onRegister }) {
           {/* Row 2 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label>Email</label>
-              <input type="email" autoComplete="email" {...register("email")} />
+              <label htmlFor="email">Email</label>
+              <input type="email" id="email" autoComplete="email" {...register("email")} />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
 
             <div>
-              <label>Personal Number</label>
+              <label htmlFor="pnr">Personal Number</label>
               <input
+                id="pnr"
                 placeholder="YYYYMMDD-XXXX"
                 inputMode="numeric"
                 {...register("pnr")}
@@ -82,8 +83,8 @@ export default function RegisterPage({ loading, error, onRegister }) {
 
           {/* Username */}
           <div>
-            <label>Username</label>
-            <input autoComplete="username" {...register("username")} />
+            <label htmlFor="username">Username</label>
+            <input id="username" autoComplete="username" {...register("username")} />
             {errors.username && (
               <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
             )}
@@ -91,8 +92,8 @@ export default function RegisterPage({ loading, error, onRegister }) {
 
           {/* Password */}
           <div>
-            <label>Password</label>
-            <input type="password" autoComplete="new-password" {...register("password")} />
+            <label htmlFor="password">Password</label>
+            <input id="password" type="password" autoComplete="new-password" {...register("password")} />
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
             )}
