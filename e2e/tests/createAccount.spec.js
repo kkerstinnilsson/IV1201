@@ -3,6 +3,8 @@
  */
 import { test, expect, request } from '@playwright/test';
 
+test.describe.configure({ mode: 'serial' });
+
 const TEST_USERNAME = 'testcreateaccount';
 const BACKEND_URL = 'http://16.171.147.183:3000';
 
@@ -26,15 +28,16 @@ test.afterEach(async () => {
 test('create account successfully', async ({ page }) => {
   await page.goto('./register');
 
-  await page.getByLabel('Name').fill('Test');
+  await page.getByLabel('Name', { exact: true }).fill('Test');
   await page.getByLabel('Surname').fill('User');
   await page.getByLabel('Email').fill('testcreateaccount@test.com');
-  await page.getByLabel('Personal Number').fill('199001010000');
+  await page.getByLabel('Personal Number').fill('19900101-0000');
   await page.getByLabel('Username').fill(TEST_USERNAME);
   await page.getByLabel('Password').fill('testpass123');
   await page.getByRole('button', { name: 'Register' }).click();
 
-  await expect(page).getByText('Account created successfully.').toBeVisible();
+  await page.waitForURL(/\/login/);
+  await expect(page.getByText('Account created successfully.')).toBeVisible();
   await expect(page).toHaveURL(/\/login/);
 });
 
@@ -43,26 +46,28 @@ test('create account with missing fields shows error', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Register' }).click();
 
-  await expect(page).getByText('Please enter your name').toBeVisible();
-  await expect(page).getByText('Please enter your surname').toBeVisible();
-  await expect(page).getByText('Please enter an email address').toBeVisible();
-  await expect(page).getByText('Please enter your personal number').toBeVisible();
-  await expect(page).getByText('Please enter a username').toBeVisible();
-  await expect(page).getByText('Please enter a password').toBeVisible();
+  await expect(page.getByText('Please enter your name')).toBeVisible();
+  await expect(page.getByText('Please enter your surname')).toBeVisible();
+  await expect(page.getByText('Please enter an email address')).toBeVisible();
+  await expect(page.getByText('Please enter your personal number')).toBeVisible();
+  await expect(page.getByText('Please enter a username')).toBeVisible();
+  await expect(page.getByText('Please enter a password')).toBeVisible();
+  await page.waitForURL(/\/register/);
   await expect(page).toHaveURL(/\/register/);
 });
 
 test('create account with duplicate username shows error', async ({ page }) => {
   await page.goto('./register');
 
-  await page.getByLabel('Name').fill('Test');
+  await page.getByLabel('Name', { exact: true }).fill('Test');
   await page.getByLabel('Surname').fill('User');
   await page.getByLabel('Email').fill('testcreateaccount@test.com');
-  await page.getByLabel('Personal Number').fill('199001010000');
+  await page.getByLabel('Personal Number').fill('19900101-0000');
   await page.getByLabel('Username').fill(process.env.APPLICANT_USERNAME);
   await page.getByLabel('Password').fill('testpass123');
   await page.getByRole('button', { name: 'Register' }).click();
 
-  await expect(page).getByText('Username already exists').toBeVisible();
+  await page.waitForURL(/\/register/);
+  await expect(page.getByText('Username already exists')).toBeVisible();
   await expect(page).toHaveURL(/\/register/);
 });

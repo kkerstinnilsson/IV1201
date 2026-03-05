@@ -196,7 +196,7 @@ export default function ApplicantHomePage({
             <div className="space-y-1">
               <label htmlFor="availableUntil">Available Until</label>
               <input 
-                id="availableTo"
+                id="availableUntil"
                 type="date" 
                 value={availability.endDate}
                 onChange={(e) => setAvailability({...availability, endDate: e.target.value})}
