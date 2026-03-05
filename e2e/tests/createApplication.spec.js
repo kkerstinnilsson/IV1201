@@ -18,9 +18,17 @@ test('applicant can submit an application', async ({ page }) => {
   const beginButton = page.getByRole('button', { name: 'Begin Application' });
   const deleteButton = page.getByRole('button', { name: 'Delete Existing Application' });
 
+  // Wait for status check to complete - either button should appear
+  await Promise.race([
+    beginButton.waitFor({ state: 'visible', timeout: 10000 }),
+    deleteButton.waitFor({ state: 'visible', timeout: 10000 }),
+  ]);
+
+  await page.waitForTimeout(500);
+
   if (await deleteButton.isVisible()) {
     await deleteButton.click();
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByRole('button', { name: 'Delete', exact: true }).click();
   }
 
   // Start new application
@@ -59,6 +67,6 @@ test('applicant can submit an application', async ({ page }) => {
   // Cleanup: delete so next run starts fresh
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Delete Existing Application' }).click();
-  await page.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(beginButton).toBeVisible();
 });
