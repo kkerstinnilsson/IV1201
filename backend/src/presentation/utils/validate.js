@@ -21,4 +21,43 @@ function validatePnr(pnr, missing, invalid) {
   else if (!pnrRegex.test(pnr)) invalid.push('pnr');
 }
 
-module.exports = { validateEmail, validateMinLen, validatePnr };
+function validateNonEmptyArray(value, fieldName, missing, invalid) {
+  if (value === undefined || value === null) {
+    missing.push(fieldName);
+    return false;
+  }
+  if (!Array.isArray(value) || value.length === 0) {
+    invalid.push(fieldName);
+    return false;
+  }
+  return true;
+}
+
+function isValidDate(value) {
+  const d = new Date(value);
+  return !Number.isNaN(d.getTime());
+}
+
+function validateDateRange(start, end, startField, endField, rangeField, missing, invalid) {
+  if (!start) missing.push(startField);
+  else if (!isValidDate(start)) invalid.push(startField);
+
+  if (!end) missing.push(endField);
+  else if (!isValidDate(end)) invalid.push(endField);
+
+  if (
+    start && end
+    && isValidDate(start) && isValidDate(end)
+    && new Date(start) > new Date(end)
+  ) {
+    invalid.push(rangeField);
+  }
+}
+
+module.exports = {
+  validateEmail,
+  validateMinLen,
+  validatePnr,
+  validateDateRange,
+  validateNonEmptyArray,
+};

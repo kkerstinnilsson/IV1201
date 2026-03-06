@@ -17,6 +17,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile.dev
     container_name: recruitment-backend-dev
+    env_file:
+      - ./backend/.env
     environment:
       DB_USER: postgres
       DB_HOST: db
