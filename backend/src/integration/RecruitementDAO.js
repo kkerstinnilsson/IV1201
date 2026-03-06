@@ -7,12 +7,10 @@
  */
 
 const {
-  DatabaseError,
-} = require('../business/errors/AppError');
-
-const {
   Person, Application, Availability, Competence, CompetenceProfile,
 } = require('../../models');
+
+const { validateInteger, validateDecimal, validateString, validateDateStr } = require('./utils/validateIntegration');
 
 /**
  * Class representing the RecruitementDAO
@@ -32,7 +30,6 @@ class RecruitementDAO {
    * @throws {DatabaseError} If a database error occurs
    */
   async getAllApplicants(t = null) {
-    try {
       const rows = await Application.findAll({
         attributes: ['status'],
         include: [{
@@ -50,9 +47,6 @@ class RecruitementDAO {
         lastName: r.Person.surname,
         status: r.status,
       }));
-    } catch (error) {
-      throw new DatabaseError('Failed to fetch applicants', error);
-    }
   }
 
   /**
@@ -65,17 +59,15 @@ class RecruitementDAO {
    * @throws {DatabaseError} If a database error occurs
    */
   async createApplication(personId, t) {
+    // validating correct data format
+    validateInteger(personId, 'personId'); 
     if (!t) {
       throw new Error('A transaction is required to create an application row!');
     }
-    try {
       return await Application.create(
         { person_id: personId },
         { transaction: t },
       );
-    } catch (error) {
-      throw new DatabaseError('Failed to create application', error);
-    }
   }
 
   /**
@@ -89,10 +81,14 @@ class RecruitementDAO {
    * @throws {DatabaseError} If a database error occurs
    */
   async createAvailability(personId, { startDate, endDate }, t) {
+    // validating correct data format
+    validateInteger(personId, 'personId');
+    validateDateStr(startDate, 'startDate');
+    validateDateStr(endDate, 'endDate');
+
     if (!t) {
       throw new Error('A transaction is required to create availability records!');
     }
-    try {
       return await Availability.create(
         {
           person_id: personId,
@@ -101,9 +97,6 @@ class RecruitementDAO {
         },
         { transaction: t },
       );
-    } catch (error) {
-      throw new DatabaseError('Failed to create availability', error);
-    }
   }
 
   /**
@@ -117,10 +110,13 @@ class RecruitementDAO {
    * @throws {DatabaseError} If a database error occurs
    */
   async createCompetenceProfile(personId, competenceId, years, t) {
+    // validating correct data format
+    validateInteger(personId, 'personId');
+    validateInteger(competenceId, 'competenceId');
+    validateDecimal(years, 'yearsOfExperience');
     if (!t) {
       throw new Error('A transaction is required to create a competence profile!');
     }
-    try {
       return await CompetenceProfile.create(
         {
           person_id: personId,
@@ -129,9 +125,6 @@ class RecruitementDAO {
         },
         { transaction: t },
       );
-    } catch (error) {
-      throw new DatabaseError('Failed to create competence profile', error);
-    }
   }
 
   /**
@@ -143,16 +136,15 @@ class RecruitementDAO {
    * @throws {DatabaseError} If a database error occurs
    */
   async getCompetenceIdByName(name, t = null) {
-    try {
+     // validating correct data format
+     validateString(name, 'competenceName');
+
       const competence = await Competence.findOne({
         where: { name },
         attributes: ['competence_id'],
         transaction: t || undefined,
       });
       return competence ? competence.competence_id : null;
-    } catch (error) {
-      throw new DatabaseError('Failed to fetch competence by name', error);
-    }
   }
 
   /**
@@ -164,7 +156,9 @@ class RecruitementDAO {
    * @throws {DatabaseError} If a database error occurs
    */
   async hasApplication(personId, t = null) {
-    try {
+     // validating correct data format
+     validateInteger(personId, 'personId');
+
       const appl = await Application.findOne({
         where: { person_id: personId },
         attributes: ['application_id'],
@@ -185,9 +179,6 @@ class RecruitementDAO {
         transaction: t || undefined,
       });
       return competence !== null;
-    } catch (error) {
-      throw new DatabaseError('Failed to check application existence', error);
-    }
   }
 
   /**
@@ -199,16 +190,15 @@ class RecruitementDAO {
    * @throws {DatabaseError} If a database error occurs
    */
   async deleteApplication(personId, t) {
+    // validating correct data format
+    validateInteger(personId, 'personId');
+
     if (!t) {
       throw new Error('A transaction is required to delete an application!');
     }
-    try {
       await CompetenceProfile.destroy({ where: { person_id: personId }, transaction: t });
       await Availability.destroy({ where: { person_id: personId }, transaction: t });
       return await Application.destroy({ where: { person_id: personId }, transaction: t });
-    } catch (error) {
-      throw new DatabaseError('Failed to delete application', error);
-    }
   }
 }
 

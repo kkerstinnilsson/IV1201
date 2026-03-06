@@ -7,6 +7,7 @@
 
 const { Op } = require('sequelize');
 const { AccountToken, Person, Credentials } = require('../../models');
+const { validateInteger, validateString } = require('./utils/validateIntegration');
 
 class AccountTokenDAO {
   /**
@@ -15,6 +16,9 @@ class AccountTokenDAO {
    * @returns {Promise<Person|null>}
    */
   async findApplicantByEmail(email, t = null) {
+    // validating correct data format
+    validateString(email, 'email');
+
     return Person.findOne({
       where: { email, role_id: 2 },
       attributes: ['person_id', 'email'],
@@ -28,6 +32,9 @@ class AccountTokenDAO {
    * @returns {Promise<boolean>}
    */
   async personHasCredentials(personId, t = null) {
+    // validating correct data format
+    validateInteger(personId, 'personId');
+
     const found = await Credentials.findOne({
       where: { person_id: personId },
       attributes: ['credential_id'],
@@ -45,6 +52,10 @@ class AccountTokenDAO {
    * @returns {Promise<void>}
    */
   async upsertAccountToken(personId, tokenHash, expiresAt, t) {
+    // validating correct data format
+    validateInteger(personId, 'personId');
+    validateString(tokenHash, 'tokenHash');
+
     if (!t) throw new Error('Transaction is required for upsertAccountToken');
 
     await AccountToken.upsert(
@@ -65,6 +76,9 @@ class AccountTokenDAO {
    * @returns {Promise<AccountToken|null>}
    */
   async findValidTokenByHash(tokenHash, t) {
+    // validating correct data format
+    validateString(tokenHash, 'tokenHash');
+
     if (!t) throw new Error('Transaction is required for findValidTokenByHash');
 
     return AccountToken.findOne({
@@ -85,6 +99,9 @@ class AccountTokenDAO {
    * @returns {Promise<void>}
    */
   async markTokenUsed(accountTokenId, t) {
+    // validating correct data format
+    validateInteger(accountTokenId, 'accountTokenId');
+
     if (!t) throw new Error('Transaction is required for markTokenUsed');
 
     await AccountToken.update(
