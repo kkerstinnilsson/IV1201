@@ -1,32 +1,25 @@
 /**
  * Container component for managing account claim flow state.
  */
-
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ClaimRequestPage from "../presentation/pages/ClaimRequestPage";
 import ClaimAccountPage from "../presentation/pages/ClaimAccountPage";
 import { requestAccountToken, claimAccountToken } from "../services/authService";
-import { handleApiError } from "../utils/handleApiError";
 
 export default function ClaimContainer() {
   const { token } = useParams();
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-
   const mode = token ? "claim" : "request";
 
   async function handleRequest({ email }) {
-    setError(null);
     setLoading(true);
-
     try {
       await requestAccountToken(email);
     } catch {
-
+      //
     } finally {
       setSubmitted(true);
       setLoading(false);
@@ -34,14 +27,10 @@ export default function ClaimContainer() {
   }
 
   async function handleClaim({ username, password }) {
-    setError(null);
     setLoading(true);
-
     try {
       await claimAccountToken(token, username, password);
       navigate("/login", { state: { claimed: true } });
-    } catch (err) {
-      setError(handleApiError(err, "Claim failed"));
     } finally {
       setLoading(false);
     }
@@ -51,7 +40,6 @@ export default function ClaimContainer() {
     return (
       <ClaimRequestPage
         loading={loading}
-        error={error}
         submitted={submitted}
         onSubmit={handleRequest}
       />
@@ -61,7 +49,6 @@ export default function ClaimContainer() {
   return (
     <ClaimAccountPage
       loading={loading}
-      error={error}
       onSubmit={handleClaim}
     />
   );
