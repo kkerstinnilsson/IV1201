@@ -7,6 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import ClaimRequestPage from "../presentation/pages/ClaimRequestPage";
 import ClaimAccountPage from "../presentation/pages/ClaimAccountPage";
 import { requestAccountToken, claimAccountToken } from "../services/authService";
+import { handleApiError } from "../utils/handleApiError";
 
 export default function ClaimContainer() {
   const { token } = useParams();
@@ -24,10 +25,10 @@ export default function ClaimContainer() {
 
     try {
       await requestAccountToken(email);
-      setSubmitted(true);
     } catch {
-      setSubmitted(true);
+
     } finally {
+      setSubmitted(true);
       setLoading(false);
     }
   }
@@ -40,7 +41,7 @@ export default function ClaimContainer() {
       await claimAccountToken(token, username, password);
       navigate("/login", { state: { claimed: true } });
     } catch (err) {
-      setError(err?.message ?? "Claim failed");
+      setError(handleApiError(err, "Claim failed"));
     } finally {
       setLoading(false);
     }

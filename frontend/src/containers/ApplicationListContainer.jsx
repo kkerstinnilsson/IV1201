@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import ApplicationList from '../presentation/pages/ApplicationsPage';
 import { getAllApplications } from "../services/applicationService";
+import { handleApiError } from "../utils/handleApiError";
 
 export default function ApplicationListContainer() {
 
@@ -21,7 +22,7 @@ export default function ApplicationListContainer() {
         const data = await getAllApplications();
         setApplications(data);
       } catch (err) {
-        setError(err?.message ?? "Failed to fetch applications");
+        setError(handleApiError(err, "Failed to fetch applications"));
       } finally {
         setLoading(false);
       }
