@@ -1,8 +1,7 @@
 /**
-* @file useAuth.js
-* @description Custom hook for handling authentication session state.
-*/
-
+ * @file useAuth.js
+ * @description Custom hook for handling authentication session state.
+ */
 import { useEffect, useState } from 'react';
 import { me, logout } from '../services/authService';
 
@@ -12,14 +11,19 @@ export default function useAuth() {
 
   useEffect(() => {
     me()
-      .then((data) => setUser(data.user))
+      .then((data) => setUser(data?.user ?? null))
       .catch(() => setUser(null))
       .finally(() => setCheckingSession(false));
   }, []);
 
   async function handleLogout() {
-    await logout();
-    setUser(null);
+    try {
+      await logout();
+    } catch {
+      // ignore
+    } finally {
+      setUser(null);
+    }
   }
 
   return { user, setUser, checkingSession, handleLogout };
