@@ -8,11 +8,16 @@
 
 const {
   DatabaseError,
+  ValidationError,
 } = require('../business/errors/AppError');
 
 const {
   Person, Application, Availability, Competence, CompetenceProfile,
 } = require('../../models');
+
+const {
+  validateInteger, validateDecimal, validateString, validateDateStr,
+} = require('./utils/validateIntegration');
 
 /**
  * Class representing the RecruitementDAO
@@ -62,9 +67,13 @@ class RecruitementDAO {
    * @param {number} personId - ID of the applicant
    * @param {Object} t - The required transaction object
    * @returns {Promise<Object>} The created application instance
+   * @throws {ValidationError} If personId is not a valid integer
    * @throws {DatabaseError} If a database error occurs
    */
   async createApplication(personId, t) {
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
     if (!t) {
       throw new Error('A transaction is required to create an application row!');
     }
@@ -86,9 +95,19 @@ class RecruitementDAO {
    * @param {Object} availability - Object containing startDate and endDate
    * @param {Object} t - The required transaction object
    * @returns {Promise<Object>} The created availability record
+   * @throws {ValidationError} If any field fails validation
    * @throws {DatabaseError} If a database error occurs
    */
   async createAvailability(personId, { startDate, endDate }, t) {
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
+    if (!validateDateStr(startDate)) {
+      throw new ValidationError('Integration layer: startDate must be a valid date (YYYY-MM-DD)');
+    }
+    if (!validateDateStr(endDate)) {
+      throw new ValidationError('Integration layer: endDate must be a valid date (YYYY-MM-DD)');
+    }
     if (!t) {
       throw new Error('A transaction is required to create availability records!');
     }
@@ -114,9 +133,19 @@ class RecruitementDAO {
    * @param {number} years - Years of experience
    * @param {Object} t - The required transaction object
    * @returns {Promise<Object>} The created competence profile instance
+   * @throws {ValidationError} If any field fails validation
    * @throws {DatabaseError} If a database error occurs
    */
   async createCompetenceProfile(personId, competenceId, years, t) {
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
+    if (!validateInteger(competenceId)) {
+      throw new ValidationError('Integration layer: competenceId must be a valid integer');
+    }
+    if (!validateDecimal(years)) {
+      throw new ValidationError('Integration layer: yearsOfExperience must be a valid numeric value');
+    }
     if (!t) {
       throw new Error('A transaction is required to create a competence profile!');
     }
@@ -140,9 +169,13 @@ class RecruitementDAO {
    * @param {string} name - The name of the competence
    * @param {Object} [t=null] - Optional transaction reference
    * @returns {Promise<number|null>} The competence_id if found, otherwise null
+   * @throws {ValidationError} If name is not a valid string
    * @throws {DatabaseError} If a database error occurs
    */
   async getCompetenceIdByName(name, t = null) {
+    if (!validateString(name)) {
+      throw new ValidationError('Integration layer: competenceName must be a non-empty string');
+    }
     try {
       const competence = await Competence.findOne({
         where: { name },
@@ -161,9 +194,13 @@ class RecruitementDAO {
    * @param {number} personId - ID of the person to check
    * @param {Object} [t=null] - Optional transaction reference
    * @returns {Promise<boolean>} True if any application related data exists
+   * @throws {ValidationError} If personId is not a valid integer
    * @throws {DatabaseError} If a database error occurs
    */
   async hasApplication(personId, t = null) {
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
     try {
       const appl = await Application.findOne({
         where: { person_id: personId },
@@ -196,9 +233,13 @@ class RecruitementDAO {
    * @param {number} personId - ID of the person
    * @param {Object} t - The required transaction object
    * @returns {Promise<number>} Number of application rows deleted
+   * @throws {ValidationError} If personId is not a valid integer
    * @throws {DatabaseError} If a database error occurs
    */
   async deleteApplication(personId, t) {
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
     if (!t) {
       throw new Error('A transaction is required to delete an application!');
     }
