@@ -63,6 +63,7 @@ export function claimAccountToken(token, username, password) {
 export function login(username, password) {
   return httpClient("/auth/login", {
     method: "POST",
+    skipRedirect: true,
     body: JSON.stringify({ username, password }),
   });
 }
