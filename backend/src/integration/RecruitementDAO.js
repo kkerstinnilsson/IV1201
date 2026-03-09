@@ -25,7 +25,6 @@ const {
  */
 class RecruitementDAO {
   constructor() {
-    console.log(' RecruitementDAO: Initialized with Sequelize');
   }
 
   /**

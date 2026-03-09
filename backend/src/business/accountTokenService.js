@@ -37,33 +37,38 @@ function randomToken() {
  * @returns {Promise<{email:string, link:string, expiresAt:Date}>}
  */
 async function requestAccountToken(email) {
-  return sequelize.transaction(async (t) => {
-    const person = await accountTokenDAO.findApplicantByEmail(email, t);
-    if (!person) {
-      throw new NotFoundError('Email not found');
-    }
+  try {
+    return await sequelize.transaction(async (t) => {
+      const person = await accountTokenDAO.findApplicantByEmail(email, t);
+      if (!person) {
+        throw new NotFoundError('Email not found');
+      }
 
-    // Only applicants without credentials can request a token
-    if (await accountTokenDAO.personHasCredentials(person.person_id, t)) {
-      throw new AppError('Already has credentials', 409);
-    }
+      // Only applicants without credentials can request a token
+      if (await accountTokenDAO.personHasCredentials(person.person_id, t)) {
+        throw new AppError('Already has credentials', 409);
+      }
 
-    const token = randomToken();
-    const tokenHash = sha256(token);
-    const expiresAt = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000);
+      const token = randomToken();
+      const tokenHash = sha256(token);
+      const expiresAt = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000);
 
-    await accountTokenDAO.upsertAccountToken(person.person_id, tokenHash, expiresAt, t);
+      await accountTokenDAO.upsertAccountToken(person.person_id, tokenHash, expiresAt, t);
 
-    // const link = `http://localhost:5173/claim/${token}`;
+      // const link = `http://localhost:5173/claim/${token}`;
 
-    const FRONTEND_BASE_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
-    const link = `${FRONTEND_BASE_URL}/claim/${token}`;
+      const FRONTEND_BASE_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
+      const link = `${FRONTEND_BASE_URL}/claim/${token}`;
 
-    // Simulated email
-    console.log(`[SIMULATED_EMAIL] to=${person.email} link=${link}`);
+      // Simulated email
+      console.log(`[SIMULATED_EMAIL] to=${person.email} link=${link}`);
 
-    return { email: person.email, link, expiresAt };
-  });
+      return { email: person.email, link, expiresAt };
+    });
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to request account token', 500, { cause: error });
+  }
 }
 
 /**
@@ -76,34 +81,39 @@ async function requestAccountToken(email) {
  * @returns {Promise<{id:number, username:string}>}
  */
 async function claimAccountToken(token, username, password) {
-  const tokenHash = sha256(token);
+  try {
+    const tokenHash = sha256(token);
 
-  return sequelize.transaction(async (t) => {
-    const tokenRow = await accountTokenDAO.findValidTokenByHash(tokenHash, t);
-    if (!tokenRow) {
-      throw new ValidationError('Invalid or expired token');
-    }
+    return await sequelize.transaction(async (t) => {
+      const tokenRow = await accountTokenDAO.findValidTokenByHash(tokenHash, t);
+      if (!tokenRow) {
+        throw new ValidationError('Invalid or expired token');
+      }
 
-    // Ensure username is unique
-    if (await userDAO.usernameExists(username, t)) {
-      throw new AppError('Username already exists', 409);
-    }
+      // Ensure username is unique
+      if (await userDAO.usernameExists(username, t)) {
+        throw new AppError('Username already exists', 409);
+      }
 
-    // Ensure person still doesn't have credentials
-    if (await accountTokenDAO.personHasCredentials(tokenRow.person_id, t)) {
-      throw new AppError('Already has credentials', 409);
-    }
+      // Ensure person still doesn't have credentials
+      if (await accountTokenDAO.personHasCredentials(tokenRow.person_id, t)) {
+        throw new AppError('Already has credentials', 409);
+      }
 
-    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    // Create credentials for existing person
-    await userDAO.createCredentialsForPerson(tokenRow.person_id, username, passwordHash, t);
+      // Create credentials for existing person
+      await userDAO.createCredentialsForPerson(tokenRow.person_id, username, passwordHash, t);
 
-    // Mark token as used
-    await accountTokenDAO.markTokenUsed(tokenRow.account_token_id, t);
+      // Mark token as used
+      await accountTokenDAO.markTokenUsed(tokenRow.account_token_id, t);
 
-    return { id: tokenRow.person_id, username };
-  });
+      return { id: tokenRow.person_id, username };
+    });
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to claim account token', 500, { cause: error });
+  }
 }
 
 module.exports = { requestAccountToken, claimAccountToken };

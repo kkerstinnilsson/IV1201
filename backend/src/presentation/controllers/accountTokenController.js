@@ -48,7 +48,7 @@ async function claimAccountToken(req, res) {
   validateMinLen(password, 6, 'password', missing, invalid);
 
   if (missing.length || invalid.length) {
-    throw new ValidationError('Validation failed');
+    throw new ValidationError('Validation failed', 400, { missing, invalid });
   }
 
   const result = await accountTokenService.claimAccountToken(token, username, password);
