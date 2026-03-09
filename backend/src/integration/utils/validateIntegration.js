@@ -19,7 +19,7 @@ function validateInteger(value) {
  * @returns {boolean} True if valid numeric value, false otherwise
  */
 function validateDecimal(value) {
-  return value !== undefined && value !== null && !isNaN(parseFloat(value));
+  return value !== undefined && value !== null && !Number.isNaN(parseFloat(value));
 }
 
 /**
@@ -38,7 +38,7 @@ function validateString(value) {
  */
 function validateDateStr(dateStr) {
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  return !!dateStr && dateRegex.test(dateStr) && !isNaN(Date.parse(dateStr));
+  return !!dateStr && dateRegex.test(dateStr) && !Number.isNaN(Date.parse(dateStr));
 }
 
 /**
@@ -51,4 +51,6 @@ function validatePnr(pnr) {
   return typeof pnr === 'string' && pnrRegex.test(pnr);
 }
 
-module.exports = { validateInteger, validateDecimal, validateString, validateDateStr, validatePnr };
+module.exports = {
+  validateInteger, validateDecimal, validateString, validateDateStr, validatePnr,
+};
