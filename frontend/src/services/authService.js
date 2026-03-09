@@ -3,8 +3,7 @@
  * @description API client for authentication endpoints.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
-
+import { httpClient } from "./httpClient";
 /**
  * Register a new user account.
  *
@@ -15,20 +14,13 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL;
  * @param {string} username
  * @param {string} password
  * @returns {Promise<Object>}
+ * @throws {ApiError} if the request fails or validation errors occur
  */
-export async function register(name, surname, email, pnr, username, password) {
-  const response = await fetch(`${API_BASE}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+export function register(name, surname, email, pnr, username, password) {
+  return httpClient("/auth/register", {
+    method: "POST",
     body: JSON.stringify({ name, surname, email, pnr, username, password }),
   });
-
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(data?.message ?? `Response status: ${response.status}`);
-  }
-  return data;
 }
 
 /**
@@ -36,18 +28,13 @@ export async function register(name, surname, email, pnr, username, password) {
  *
  * @param {string} email
  * @returns {Promise<Object>}
+ * @throws {ApiError} If the request fails or the email is not found
  */
-export async function requestAccountToken(email) {
-  const response = await fetch(`${API_BASE}/auth/account-token/request`, {
+export function requestAccountToken(email) {
+  return httpClient("/auth/account-token/request", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ email }),
   });
-
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.message ?? `Response status: ${response.status}`);
-  return data;
 }
 
 /**
@@ -57,18 +44,13 @@ export async function requestAccountToken(email) {
  * @param {string} username
  * @param {string} password
  * @returns {Promise<Object>}
+ * @throws {ApiError} If the token is invalid, expired, or the request fails.
  */
-export async function claimAccountToken(token, username, password) {
-  const response = await fetch(`${API_BASE}/auth/account-token/claim/${token}`, {
+export function claimAccountToken(token, username, password) {
+  return httpClient(`/auth/account-token/claim/${token}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ username, password }),
   });
-
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.message ?? `Response status: ${response.status}`);
-  return data;
 }
 
 /**
@@ -76,51 +58,32 @@ export async function claimAccountToken(token, username, password) {
  * @param {string} username
  * @param {string} password
  * @returns {Promise<{user:{id:number, username:string, role:string}}>}
+ * @throws {ApiError} If credentials are invalid or the request fails
  */
-export async function login(username, password) {
-  const response = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+export function login(username, password) {
+  return httpClient("/auth/login", {
+    method: "POST",
+    skipRedirect: true,
     body: JSON.stringify({ username, password }),
   });
-
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(data?.message ?? `Response status: ${response.status}`);
-  }
-  return data;
 }
 
 /**
  * Get currently logged in user (session-based).
  * @returns {Promise<{user:{id:number, username:string, role:string}}>}
+ * @throws {ApiError} If the request fails for a reason other than authentication
  */
-export async function me() {
-  const response = await fetch(`${API_BASE}/auth/me`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(data?.message ?? `Response status: ${response.status}`);
-  }
-  return data;
+export function me() {
+  return httpClient("/auth/me", { skipRedirect: true });
 }
 
 /**
  * Log out (destroy session).
  * @returns {Promise<{message:string}>}
+ * @throws {ApiError} If the request fails
  */
-export async function logout() {
-  const response = await fetch(`${API_BASE}/auth/logout`, {
-    method: 'POST',
-    credentials: 'include',
+export function logout() {
+  return httpClient("/auth/logout", {
+    method: "POST",
   });
-
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(data?.message ?? `Response status: ${response.status}`);
-  }
-  return data;
 }

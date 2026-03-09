@@ -9,6 +9,7 @@ import {
   deleteApplication,
 } from '../services/applicationService';
 import { expertiseItemSchema, availabilitySchema } from "../validation/applicationSchemas";
+import { handleApiError } from "../utils/handleApiError";
 
 // helper that convers zod error to a { fieldName: message } object for UI
 function zodToFieldErrors(zodError) {
@@ -68,7 +69,7 @@ export default function ApplicantHomeContainer({ user }) {
         setApplicationStatus({
           loading: false,
           hasApplication: false,
-          error: err.message,
+          error: handleApiError(err, "Failed to fetch application status"),
         });
       }
     };
@@ -88,7 +89,7 @@ export default function ApplicantHomeContainer({ user }) {
       });
       reset();
     } catch (err) {
-      setErrors((prev) => ({ ...prev, submit: err.message }));
+      setErrors((prev) => ({ ...prev, submit: handleApiError(err, "Failed to delete application") }));
     }
   };
 
@@ -146,7 +147,7 @@ export default function ApplicantHomeContainer({ user }) {
     await submitApplication({expertiseList, availability});
     setStep(5);
   } catch (err) {
-    setErrors((prev) => ({ ...prev, submit: err.message }));
+    setErrors((prev) => ({ ...prev, submit: handleApiError(err, "Failed to submit application") }));
   }
 };
 

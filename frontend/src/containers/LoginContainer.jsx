@@ -8,19 +8,13 @@ import LoginPage from '../presentation/pages/LoginPage';
 import { login } from '../services/authService';
 
 export default function LoginContainer({ onLoginSuccess }) {
-    
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   async function handleLogin({ username, password }) {
-    setError(null);
     setLoading(true);
-
     try {
       const data = await login(username, password);
       onLoginSuccess(data.user);
-    } catch (err) {
-      setError(err?.message ?? 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -29,7 +23,6 @@ export default function LoginContainer({ onLoginSuccess }) {
   return (
     <LoginPage
       loading={loading}
-      error={error}
       onLogin={handleLogin}
     />
   );
