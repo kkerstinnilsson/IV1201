@@ -9,7 +9,7 @@
  * - getApplicationStatus(): returns boolean, error wrapping
  */
 
-jest.mock("../../models", () => ({
+jest.mock('../../models', () => ({
   sequelize: { transaction: jest.fn() },
 }));
 
@@ -23,15 +23,13 @@ const mockDAO = {
   deleteApplication: jest.fn(),
 };
 
-jest.mock("../../src/integration/RecruitementDAO", () =>
-  jest.fn().mockImplementation(() => mockDAO)
-);
+jest.mock('../../src/integration/RecruitementDAO', () => jest.fn().mockImplementation(() => mockDAO));
 
-const { sequelize } = require("../../models");
-const { AppError, ValidationError, NotFoundError } = require("../../src/business/errors/AppError");
-const applicationsService = require("../../src/business/applicationsService");
+const { sequelize } = require('../../models');
+const { ValidationError, NotFoundError } = require('../../src/business/errors/AppError');
+const applicationsService = require('../../src/business/applicationsService');
 
-describe("applicationsService", () => {
+describe('applicationsService', () => {
   beforeEach(() => {
     /** Resets call history between tests */
     jest.clearAllMocks();
@@ -43,7 +41,7 @@ describe("applicationsService", () => {
     sequelize.transaction.mockImplementation(async (cb) => cb({}));
   });
 
-  test("getAllApplications: returns list", async () => {
+  test('getAllApplications: returns list', async () => {
     /**
      * Success:
      * - DAO returns a list of applicants
@@ -54,20 +52,20 @@ describe("applicationsService", () => {
     expect(res).toEqual([{ id: 1 }]);
   });
 
-  test("getAllApplications: wraps unexpected error into AppError(500)", async () => {
+  test('getAllApplications: wraps unexpected error into AppError(500)', async () => {
     /**
      * Error wrapping:
      * - DAO throws a regular Error
      * - service should wrap it into AppError(500) with message "Failed to fetch applications"
      */
-    mockDAO.getAllApplicants.mockRejectedValue(new Error("db down"));
+    mockDAO.getAllApplicants.mockRejectedValue(new Error('db down'));
     await expect(applicationsService.getAllApplications()).rejects.toMatchObject({
-      message: "Failed to fetch applications",
+      message: 'Failed to fetch applications',
       statusCode: 500,
     });
   });
 
-  test("submitApplication: success", async () => {
+  test('submitApplication: success', async () => {
     /**
      * Success:
      * - user has no existing application
@@ -80,21 +78,21 @@ describe("applicationsService", () => {
 
     const res = await applicationsService.submitApplication(
       12,
-      [{ area: "lotteries", years: 2 }],
-      [{ startDate: "2026-01-01", endDate: "2026-02-01" }]
+      [{ area: 'lotteries', years: 2 }],
+      [{ startDate: '2026-01-01', endDate: '2026-02-01' }],
     );
 
     expect(mockDAO.createApplication).toHaveBeenCalledWith(12, expect.anything());
     expect(mockDAO.createCompetenceProfile).toHaveBeenCalledWith(12, 7, 2, expect.anything());
     expect(mockDAO.createAvailability).toHaveBeenCalledWith(
       12,
-      { startDate: "2026-01-01", endDate: "2026-02-01" },
-      expect.anything()
+      { startDate: '2026-01-01', endDate: '2026-02-01' },
+      expect.anything(),
     );
     expect(res).toEqual({ success: true });
   });
 
-  test("submitApplication: throws ValidationError if already exists", async () => {
+  test('submitApplication: throws ValidationError if already exists', async () => {
     /**
      * Validation:
      * - user already has an existing application
@@ -102,12 +100,12 @@ describe("applicationsService", () => {
      */
     mockDAO.hasApplication.mockResolvedValue(true);
 
-    const err = await applicationsService.submitApplication(12, [], []).catch(e => e);
+    const err = await applicationsService.submitApplication(12, [], []).catch((e) => e);
     expect(err).toBeInstanceOf(ValidationError);
     expect(err).toMatchObject({ statusCode: 409 });
   });
 
-  test("submitApplication: throws ValidationError if competence not found", async () => {
+  test('submitApplication: throws ValidationError if competence not found', async () => {
     /**
      * Validation:
      * - user has no existing application
@@ -117,11 +115,11 @@ describe("applicationsService", () => {
     mockDAO.hasApplication.mockResolvedValue(false);
     mockDAO.getCompetenceIdByName.mockResolvedValue(null);
 
-    await expect(applicationsService.submitApplication(12, [{ area: "Nope", years: 1 }], []))
+    await expect(applicationsService.submitApplication(12, [{ area: 'Nope', years: 1 }], []))
       .rejects.toBeInstanceOf(ValidationError);
   });
 
-  test("submitApplication: wraps unexpected error into AppError(500)", async () => {
+  test('submitApplication: wraps unexpected error into AppError(500)', async () => {
     /**
      * Error wrapping:
      * - user has no existing application
@@ -129,17 +127,17 @@ describe("applicationsService", () => {
      * - service should wrap the error into AppError(500)
      */
     mockDAO.hasApplication.mockResolvedValue(false);
-    mockDAO.createApplication.mockRejectedValue(new Error("db down"));
+    mockDAO.createApplication.mockRejectedValue(new Error('db down'));
 
     await expect(
-        applicationsService.submitApplication(12, [{ area: "lotteries", years: 2 }], [])
+      applicationsService.submitApplication(12, [{ area: 'lotteries', years: 2 }], []),
     ).rejects.toMatchObject({
-        message: "Failed to submit application",
-        statusCode: 500,
+      message: 'Failed to submit application',
+      statusCode: 500,
     });
   });
 
-  test("deleteApplication: success", async () => {
+  test('deleteApplication: success', async () => {
     /**
      * Success:
      * - application exists for the user
@@ -154,7 +152,7 @@ describe("applicationsService", () => {
     expect(res).toEqual({ success: true });
   });
 
-  test("deleteApplication: throws NotFoundError when missing", async () => {
+  test('deleteApplication: throws NotFoundError when missing', async () => {
     /**
      * Not found:
      * - no application exists for the user
@@ -166,7 +164,7 @@ describe("applicationsService", () => {
       .rejects.toBeInstanceOf(NotFoundError);
   });
 
-  test("deleteApplication: wraps unexpected error into AppError(500)", async () => {
+  test('deleteApplication: wraps unexpected error into AppError(500)', async () => {
     /**
      * Error wrapping:
      * - application exists for the user
@@ -174,15 +172,15 @@ describe("applicationsService", () => {
      * - service should wrap the error into AppError(500)
      */
     mockDAO.hasApplication.mockResolvedValue(true);
-    mockDAO.deleteApplication.mockRejectedValue(new Error("db down"));
+    mockDAO.deleteApplication.mockRejectedValue(new Error('db down'));
 
     await expect(applicationsService.deleteApplication(12)).rejects.toMatchObject({
-        message: "Failed to delete application",
-        statusCode: 500,
+      message: 'Failed to delete application',
+      statusCode: 500,
     });
   });
 
-  test("getApplicationStatus: returns boolean", async () => {
+  test('getApplicationStatus: returns boolean', async () => {
     /**
      * Success:
      * - DAO returns true for the given user
@@ -193,17 +191,17 @@ describe("applicationsService", () => {
     expect(res).toEqual({ hasApplication: true });
   });
 
-  test("getApplicationStatus: wraps unexpected error into AppError(500)", async () => {
+  test('getApplicationStatus: wraps unexpected error into AppError(500)', async () => {
     /**
      * Error wrapping:
      * - DAO throws a regular Error when checking application status
      * - service should wrap it into AppError(500)
      */
-    mockDAO.hasApplication.mockRejectedValue(new Error("db down"));
+    mockDAO.hasApplication.mockRejectedValue(new Error('db down'));
 
     await expect(applicationsService.getApplicationStatus(12)).rejects.toMatchObject({
-        message: "Failed to retrieve application status",
-        statusCode: 500,
+      message: 'Failed to retrieve application status',
+      statusCode: 500,
     });
   });
 });

@@ -14,14 +14,14 @@ const mockAuthService = {
   login: jest.fn(),
 };
 
-jest.mock("../../src/business/authService", () => mockAuthService);
+jest.mock('../../src/business/authService', () => mockAuthService);
 
 const {
   ValidationError,
   AppError,
-} = require("../../src/business/errors/AppError");
+} = require('../../src/business/errors/AppError');
 
-const authController = require("../../src/presentation/controllers/authController");
+const authController = require('../../src/presentation/controllers/authController');
 
 function createRes() {
   return {
@@ -32,13 +32,13 @@ function createRes() {
   };
 }
 
-describe("authController", () => {
+describe('authController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("register", () => {
-    test("success: validates input, delegates to service and returns 201", async () => {
+  describe('register', () => {
+    test('success: validates input, delegates to service and returns 201', async () => {
       /**
        * Success:
        * - request body contains all required and valid registration fields
@@ -47,40 +47,40 @@ describe("authController", () => {
        */
       const req = {
         body: {
-          name: "Anna",
-          surname: "Bengtsson",
-          email: "anna@bengtsson.se",
-          pnr: "20000101-1234",
-          username: "anna",
-          password: "password123",
+          name: 'Anna',
+          surname: 'Bengtsson',
+          email: 'anna@bengtsson.se',
+          pnr: '20000101-1234',
+          username: 'anna',
+          password: 'password123',
         },
       };
       const res = createRes();
 
       mockAuthService.register.mockResolvedValue({
         id: 14,
-        username: "anna",
+        username: 'anna',
       });
 
       await authController.register(req, res);
 
       expect(mockAuthService.register).toHaveBeenCalledWith({
-        name: "Anna",
-        surname: "Bengtsson",
-        email: "anna@bengtsson.se",
-        pnr: "20000101-1234",
-        username: "anna",
-        password: "password123",
+        name: 'Anna',
+        surname: 'Bengtsson',
+        email: 'anna@bengtsson.se',
+        pnr: '20000101-1234',
+        username: 'anna',
+        password: 'password123',
       });
 
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        message: "account created",
-        user: { id: 14, username: "anna" },
+        message: 'account created',
+        user: { id: 14, username: 'anna' },
       });
     });
 
-    test("throws ValidationError(400) when required fields are missing/invalid", async () => {
+    test('throws ValidationError(400) when required fields are missing/invalid', async () => {
       /**
        * Validation:
        * - request body contains missing and invalid registration fields
@@ -89,27 +89,27 @@ describe("authController", () => {
        */
       const req = {
         body: {
-          name: "",
-          surname: "",
-          email: "not-an-email",
-          pnr: "bad-pnr",
-          username: "ab",
-          password: "123",
+          name: '',
+          surname: '',
+          email: 'not-an-email',
+          pnr: 'bad-pnr',
+          username: 'ab',
+          password: '123',
         },
       };
       const res = createRes();
 
-      const err = await authController.register(req, res).catch(e => e);
+      const err = await authController.register(req, res).catch((e) => e);
       expect(err).toBeInstanceOf(ValidationError);
-      expect(err).toMatchObject({ 
-        message: "Validation failed", 
-        statusCode: 400 
+      expect(err).toMatchObject({
+        message: 'Validation failed',
+        statusCode: 400,
       });
 
       expect(mockAuthService.register).not.toHaveBeenCalled();
     });
 
-    test("throws ValidationError(400) when body is missing", async () => {
+    test('throws ValidationError(400) when body is missing', async () => {
       /**
        * Validation:
        * - request body is missing entirely
@@ -126,8 +126,8 @@ describe("authController", () => {
     });
   });
 
-  describe("login", () => {
-    test("throws ValidationError(400) when username or password is missing", async () => {
+  describe('login', () => {
+    test('throws ValidationError(400) when username or password is missing', async () => {
       /**
        * Validation:
        * - login request is missing either username or password
@@ -136,7 +136,7 @@ describe("authController", () => {
        */
       const req = {
         body: {
-          username: "anna",
+          username: 'anna',
         },
         session: {},
       };
@@ -144,14 +144,14 @@ describe("authController", () => {
 
       await expect(authController.login(req, res))
         .rejects.toMatchObject({
-          message: "Username and password are required",
+          message: 'Username and password are required',
           statusCode: 400,
         });
 
       expect(mockAuthService.login).not.toHaveBeenCalled();
     });
 
-    test("throws ValidationError(401) when credentials are invalid", async () => {
+    test('throws ValidationError(401) when credentials are invalid', async () => {
       /**
        * Authentication:
        * - authService.login returns null for invalid credentials
@@ -160,8 +160,8 @@ describe("authController", () => {
        */
       const req = {
         body: {
-          username: "anna",
-          password: "wrong",
+          username: 'anna',
+          password: 'wrong',
         },
         session: {},
       };
@@ -171,12 +171,12 @@ describe("authController", () => {
 
       await expect(authController.login(req, res))
         .rejects.toMatchObject({
-          message: "Wrong username or password",
+          message: 'Wrong username or password',
           statusCode: 401,
         });
     });
 
-    test("success: regenerates session, saves user and returns JSON", async () => {
+    test('success: regenerates session, saves user and returns JSON', async () => {
       /**
        * Success:
        * - username and password are provided
@@ -187,8 +187,8 @@ describe("authController", () => {
        */
       const req = {
         body: {
-          username: "anna",
-          password: "password123",
+          username: 'anna',
+          password: 'password123',
         },
         session: {
           regenerate: jest.fn((cb) => cb(null)),
@@ -199,26 +199,26 @@ describe("authController", () => {
 
       mockAuthService.login.mockResolvedValue({
         id: 1,
-        username: "anna",
-        role: "applicant",
+        username: 'anna',
+        role: 'applicant',
       });
 
       await authController.login(req, res);
 
-      expect(mockAuthService.login).toHaveBeenCalledWith("anna", "password123");
+      expect(mockAuthService.login).toHaveBeenCalledWith('anna', 'password123');
       expect(req.session.regenerate).toHaveBeenCalledTimes(1);
       expect(req.session.user).toEqual({
         id: 1,
-        username: "anna",
-        role: "applicant",
+        username: 'anna',
+        role: 'applicant',
       });
       expect(req.session.save).toHaveBeenCalledTimes(1);
       expect(res.json).toHaveBeenCalledWith({
-        user: { id: 1, username: "anna", role: "applicant" },
+        user: { id: 1, username: 'anna', role: 'applicant' },
       });
     });
 
-    test("throws AppError(500) when session regenerate fails", async () => {
+    test('throws AppError(500) when session regenerate fails', async () => {
       /**
         * Session error:
         * - authService returns a valid authenticated user
@@ -228,11 +228,11 @@ describe("authController", () => {
         */
       const req = {
         body: {
-          username: "anna",
-          password: "password123",
+          username: 'anna',
+          password: 'password123',
         },
         session: {
-          regenerate: jest.fn((cb) => cb(new Error("boom"))),
+          regenerate: jest.fn((cb) => cb(new Error('boom'))),
           save: jest.fn((cb) => cb(null)),
         },
       };
@@ -240,20 +240,19 @@ describe("authController", () => {
 
       mockAuthService.login.mockResolvedValue({
         id: 1,
-        username: "anna",
-        role: "applicant",
+        username: 'anna',
+        role: 'applicant',
       });
 
-      const err = await authController.login(req, res).catch(e => e);
+      const err = await authController.login(req, res).catch((e) => e);
       expect(err).toBeInstanceOf(AppError);
-      expect(err).toMatchObject({ 
-        message: "Session regeneration failed", 
-        statusCode: 500, 
+      expect(err).toMatchObject({
+        message: 'Session regeneration failed',
+        statusCode: 500,
       });
     });
 
-
-    test("throws AppError(500) when session save fails", async () => {
+    test('throws AppError(500) when session save fails', async () => {
       /**
        * Session error:
        * - authService returns a valid authenticated user
@@ -263,20 +262,20 @@ describe("authController", () => {
        */
       const req = {
         body: {
-          username: "anna",
-          password: "password123",
+          username: 'anna',
+          password: 'password123',
         },
         session: {
           regenerate: jest.fn((cb) => cb(null)),
-          save: jest.fn((cb) => cb(new Error("boom"))),
+          save: jest.fn((cb) => cb(new Error('boom'))),
         },
       };
       const res = createRes();
 
       mockAuthService.login.mockResolvedValue({
         id: 1,
-        username: "anna",
-        role: "applicant",
+        username: 'anna',
+        role: 'applicant',
       });
 
       await expect(authController.login(req, res))
@@ -284,14 +283,14 @@ describe("authController", () => {
 
       await expect(authController.login(req, res))
         .rejects.toMatchObject({
-          message: "Session save failed",
+          message: 'Session save failed',
           statusCode: 500,
         });
     });
   });
 
-  describe("logout", () => {
-    test("success: destroys session, clears cookie and returns message", async () => {
+  describe('logout', () => {
+    test('success: destroys session, clears cookie and returns message', async () => {
       /**
        * Success:
        * - session destruction succeeds
@@ -308,11 +307,11 @@ describe("authController", () => {
       await authController.logout(req, res);
 
       expect(req.session.destroy).toHaveBeenCalledTimes(1);
-      expect(res.clearCookie).toHaveBeenCalledWith("connect.sid");
-      expect(res.json).toHaveBeenCalledWith({ message: "logged out" });
+      expect(res.clearCookie).toHaveBeenCalledWith('connect.sid');
+      expect(res.json).toHaveBeenCalledWith({ message: 'logged out' });
     });
 
-    test("throws AppError(500) when destroy fails", async () => {
+    test('throws AppError(500) when destroy fails', async () => {
       /**
        * Session error:
        * - session destruction fails
@@ -321,21 +320,21 @@ describe("authController", () => {
        */
       const req = {
         session: {
-          destroy: jest.fn((cb) => cb(new Error("boom"))),
+          destroy: jest.fn((cb) => cb(new Error('boom'))),
         },
       };
       const res = createRes();
 
       await expect(authController.logout(req, res))
         .rejects.toMatchObject({
-          message: "Logout failed",
+          message: 'Logout failed',
           statusCode: 500,
         });
     });
   });
 
-  describe("me", () => {
-    test("returns current user from session", async () => {
+  describe('me', () => {
+    test('returns current user from session', async () => {
       /**
        * Success:
        * - session contains an authenticated user
@@ -343,7 +342,7 @@ describe("authController", () => {
        */
       const req = {
         session: {
-          user: { id: 1, username: "anna", role: "applicant" },
+          user: { id: 1, username: 'anna', role: 'applicant' },
         },
       };
       const res = createRes();
@@ -351,11 +350,11 @@ describe("authController", () => {
       await authController.me(req, res);
 
       expect(res.json).toHaveBeenCalledWith({
-        user: { id: 1, username: "anna", role: "applicant" },
+        user: { id: 1, username: 'anna', role: 'applicant' },
       });
     });
 
-    test("throws AppError(401) when not authenticated", async () => {
+    test('throws AppError(401) when not authenticated', async () => {
       /**
        * Authentication:
        * - session has no authenticated user
@@ -366,7 +365,7 @@ describe("authController", () => {
 
       await expect(authController.me(req, res))
         .rejects.toMatchObject({
-          message: "Not authenticated",
+          message: 'Not authenticated',
           statusCode: 401,
         });
     });

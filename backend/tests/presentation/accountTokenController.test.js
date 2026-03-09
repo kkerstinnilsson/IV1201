@@ -13,13 +13,13 @@ const mockAccountTokenService = {
   claimAccountToken: jest.fn(),
 };
 
-jest.mock("../../src/business/accountTokenService", () => mockAccountTokenService);
+jest.mock('../../src/business/accountTokenService', () => mockAccountTokenService);
 
 const {
   ValidationError,
-} = require("../../src/business/errors/AppError");
+} = require('../../src/business/errors/AppError');
 
-const accountTokenController = require("../../src/presentation/controllers/accountTokenController");
+const accountTokenController = require('../../src/presentation/controllers/accountTokenController');
 
 function createRes() {
   return {
@@ -30,13 +30,13 @@ function createRes() {
   };
 }
 
-describe("accountTokenController", () => {
+describe('accountTokenController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("requestAccountToken", () => {
-    test("success: validates email, delegates to service and returns 200", async () => {
+  describe('requestAccountToken', () => {
+    test('success: validates email, delegates to service and returns 200', async () => {
       /**
        * Success:
        * - request body contains a valid email address
@@ -45,31 +45,31 @@ describe("accountTokenController", () => {
        */
       const req = {
         body: {
-          email: "user@test.se",
+          email: 'user@test.se',
         },
       };
       const res = createRes();
 
       mockAccountTokenService.requestAccountToken.mockResolvedValue({
-        email: "user@test.se",
-        link: "http://test.com/claim/rawToken",
+        email: 'user@test.se',
+        link: 'http://test.com/claim/rawToken',
         expiresAt: new Date(),
       });
 
       await accountTokenController.requestAccountToken(req, res);
 
-      expect(mockAccountTokenService.requestAccountToken).toHaveBeenCalledWith("user@test.se");
+      expect(mockAccountTokenService.requestAccountToken).toHaveBeenCalledWith('user@test.se');
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        message: "token link generated",
+        message: 'token link generated',
         data: expect.objectContaining({
-          email: "user@test.se",
-          link: "http://test.com/claim/rawToken",
+          email: 'user@test.se',
+          link: 'http://test.com/claim/rawToken',
         }),
       });
     });
 
-    test("throws ValidationError(400) when email is missing", async () => {
+    test('throws ValidationError(400) when email is missing', async () => {
       /**
        * Validation:
        * - email is missing from the request body
@@ -79,17 +79,17 @@ describe("accountTokenController", () => {
       const req = { body: {} };
       const res = createRes();
 
-      const err = await accountTokenController.requestAccountToken(req, res).catch(e => e);
+      const err = await accountTokenController.requestAccountToken(req, res).catch((e) => e);
       expect(err).toBeInstanceOf(ValidationError);
-      expect(err).toMatchObject({ 
-        message: "Validation failed", 
-        statusCode: 400 
+      expect(err).toMatchObject({
+        message: 'Validation failed',
+        statusCode: 400,
       });
 
       expect(mockAccountTokenService.requestAccountToken).not.toHaveBeenCalled();
     });
 
-    test("throws ValidationError(400) when email format is invalid", async () => {
+    test('throws ValidationError(400) when email format is invalid', async () => {
       /**
        * Validation:
        * - request body contains an invalid email format
@@ -98,14 +98,14 @@ describe("accountTokenController", () => {
        */
       const req = {
         body: {
-          email: "not-an-email",
+          email: 'not-an-email',
         },
       };
       const res = createRes();
 
       await expect(accountTokenController.requestAccountToken(req, res))
         .rejects.toMatchObject({
-          message: "Validation failed",
+          message: 'Validation failed',
           statusCode: 400,
         });
 
@@ -113,8 +113,8 @@ describe("accountTokenController", () => {
     });
   });
 
-  describe("claimAccountToken", () => {
-    test("success: validates token/body, delegates to service and returns 201", async () => {
+  describe('claimAccountToken', () => {
+    test('success: validates token/body, delegates to service and returns 201', async () => {
       /**
        * Success:
        * - route params contain a token
@@ -124,36 +124,36 @@ describe("accountTokenController", () => {
        */
       const req = {
         params: {
-          token: "rawToken",
+          token: 'rawToken',
         },
         body: {
-          username: "anna",
-          password: "password123",
+          username: 'anna',
+          password: 'password123',
         },
       };
       const res = createRes();
 
       mockAccountTokenService.claimAccountToken.mockResolvedValue({
         id: 12,
-        username: "anna",
+        username: 'anna',
       });
 
       await accountTokenController.claimAccountToken(req, res);
 
       expect(mockAccountTokenService.claimAccountToken).toHaveBeenCalledWith(
-        "rawToken",
-        "anna",
-        "password123"
+        'rawToken',
+        'anna',
+        'password123',
       );
 
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        message: "account claimed",
-        user: { id: 12, username: "anna" },
+        message: 'account claimed',
+        user: { id: 12, username: 'anna' },
       });
     });
 
-    test("throws ValidationError when token is missing", async () => {
+    test('throws ValidationError when token is missing', async () => {
       /**
        * Validation:
        * - route params are missing the claim token
@@ -163,8 +163,8 @@ describe("accountTokenController", () => {
       const req = {
         params: {},
         body: {
-          username: "anna",
-          password: "password123",
+          username: 'anna',
+          password: 'password123',
         },
       };
       const res = createRes();
@@ -175,7 +175,7 @@ describe("accountTokenController", () => {
       expect(mockAccountTokenService.claimAccountToken).not.toHaveBeenCalled();
     });
 
-    test("throws ValidationError when username is too short", async () => {
+    test('throws ValidationError when username is too short', async () => {
       /**
        * Validation:
        * - token is present but username is shorter than the minimum length
@@ -184,11 +184,11 @@ describe("accountTokenController", () => {
        */
       const req = {
         params: {
-          token: "rawToken",
+          token: 'rawToken',
         },
         body: {
-          username: "ab",
-          password: "password123",
+          username: 'ab',
+          password: 'password123',
         },
       };
       const res = createRes();
@@ -199,7 +199,7 @@ describe("accountTokenController", () => {
       expect(mockAccountTokenService.claimAccountToken).not.toHaveBeenCalled();
     });
 
-    test("throws ValidationError when password is too short", async () => {
+    test('throws ValidationError when password is too short', async () => {
       /**
        * Validation:
        * - token is present but password is shorter than the minimum length
@@ -208,11 +208,11 @@ describe("accountTokenController", () => {
        */
       const req = {
         params: {
-          token: "rawToken",
+          token: 'rawToken',
         },
         body: {
-          username: "anna",
-          password: "123",
+          username: 'anna',
+          password: '123',
         },
       };
       const res = createRes();

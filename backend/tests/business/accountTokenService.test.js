@@ -173,9 +173,10 @@ describe('accountTokenService', () => {
        * - username is already taken
        * - service should throw AppError(409) before creating credentials
        */
-      mockAccountTokenDAO.findValidTokenByHash.mockResolvedValue({ 
-        account_token_id: 5, 
-        person_id: 12 });
+      mockAccountTokenDAO.findValidTokenByHash.mockResolvedValue({
+        account_token_id: 5,
+        person_id: 12,
+      });
       mockUserDAO.usernameExists.mockResolvedValue(true);
 
       await expect(accountTokenService.claimAccountToken('rawToken', 'taken', 'pw'))
@@ -189,9 +190,10 @@ describe('accountTokenService', () => {
        * - person already has credentials (race condition guard)
        * - service should throw AppError(409) before creating credentials
        */
-      mockAccountTokenDAO.findValidTokenByHash.mockResolvedValue({ 
-        account_token_id: 5, 
-        person_id: 12 });
+      mockAccountTokenDAO.findValidTokenByHash.mockResolvedValue({
+        account_token_id: 5,
+        person_id: 12,
+      });
       mockUserDAO.usernameExists.mockResolvedValue(false);
       mockAccountTokenDAO.personHasCredentials.mockResolvedValue(true);
 

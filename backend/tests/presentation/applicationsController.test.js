@@ -17,13 +17,13 @@ const mockApplicationsService = {
   deleteApplication: jest.fn(),
 };
 
-jest.mock("../../src/business/applicationsService", () => mockApplicationsService);
+jest.mock('../../src/business/applicationsService', () => mockApplicationsService);
 
 const {
   ValidationError,
-} = require("../../src/business/errors/AppError");
+} = require('../../src/business/errors/AppError');
 
-const applicationsController = require("../../src/presentation/controllers/applicationsController");
+const applicationsController = require('../../src/presentation/controllers/applicationsController');
 
 function createRes() {
   return {
@@ -34,12 +34,12 @@ function createRes() {
   };
 }
 
-describe("applicationsController", () => {
+describe('applicationsController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test("listApplications: returns all applications with 200", async () => {
+  test('listApplications: returns all applications with 200', async () => {
     /**
      * Success:
      * - service returns a list of applications
@@ -61,8 +61,8 @@ describe("applicationsController", () => {
     expect(res.json).toHaveBeenCalledWith([{ id: 1 }, { id: 2 }]);
   });
 
-  describe("submitApplication", () => {
-    test("success: validates input, delegates to service and returns 201", async () => {
+  describe('submitApplication', () => {
+    test('success: validates input, delegates to service and returns 201', async () => {
       /**
        * Success:
        * - request body contains a non-empty expertise list and valid availability
@@ -72,10 +72,10 @@ describe("applicationsController", () => {
        */
       const req = {
         body: {
-          expertiseList: [{ area: "lotteries", years: 2 }],
+          expertiseList: [{ area: 'lotteries', years: 2 }],
           availability: {
-            startDate: "2026-01-01",
-            endDate: "2026-02-01",
+            startDate: '2026-01-01',
+            endDate: '2026-02-01',
           },
         },
         session: {
@@ -90,15 +90,15 @@ describe("applicationsController", () => {
 
       expect(mockApplicationsService.submitApplication).toHaveBeenCalledWith(
         12,
-        [{ area: "lotteries", years: 2 }],
-        [{ startDate: "2026-01-01", endDate: "2026-02-01" }]
+        [{ area: 'lotteries', years: 2 }],
+        [{ startDate: '2026-01-01', endDate: '2026-02-01' }],
       );
 
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({ success: true });
     });
 
-    test("throws ValidationError(400) when expertiseList is missing/empty", async () => {
+    test('throws ValidationError(400) when expertiseList is missing/empty', async () => {
       /**
        * Validation:
        * - expertiseList is missing or empty
@@ -109,8 +109,8 @@ describe("applicationsController", () => {
         body: {
           expertiseList: [],
           availability: {
-            startDate: "2026-01-01",
-            endDate: "2026-02-01",
+            startDate: '2026-01-01',
+            endDate: '2026-02-01',
           },
         },
         session: {
@@ -119,17 +119,17 @@ describe("applicationsController", () => {
       };
       const res = createRes();
 
-      const err = await applicationsController.submitApplication(req, res).catch(e => e);
+      const err = await applicationsController.submitApplication(req, res).catch((e) => e);
       expect(err).toBeInstanceOf(ValidationError);
-      expect(err).toMatchObject({ 
-        message: "Validation failed", 
-        statusCode: 400 
+      expect(err).toMatchObject({
+        message: 'Validation failed',
+        statusCode: 400,
       });
 
       expect(mockApplicationsService.submitApplication).not.toHaveBeenCalled();
     });
 
-    test("throws ValidationError(400) when availability is missing", async () => {
+    test('throws ValidationError(400) when availability is missing', async () => {
       /**
        * Validation:
        * - availability object is missing from the request body
@@ -138,7 +138,7 @@ describe("applicationsController", () => {
        */
       const req = {
         body: {
-          expertiseList: [{ area: "lotteries", years: 2 }],
+          expertiseList: [{ area: 'lotteries', years: 2 }],
         },
         session: {
           user: { id: 12 },
@@ -148,14 +148,14 @@ describe("applicationsController", () => {
 
       await expect(applicationsController.submitApplication(req, res))
         .rejects.toMatchObject({
-          message: "Validation failed",
+          message: 'Validation failed',
           statusCode: 400,
         });
 
       expect(mockApplicationsService.submitApplication).not.toHaveBeenCalled();
     });
 
-    test("throws ValidationError(400) when availability date range is invalid", async () => {
+    test('throws ValidationError(400) when availability date range is invalid', async () => {
       /**
        * Validation:
        * - availability is present but contains an invalid date range
@@ -164,10 +164,10 @@ describe("applicationsController", () => {
        */
       const req = {
         body: {
-          expertiseList: [{ area: "lotteries", years: 2 }],
+          expertiseList: [{ area: 'lotteries', years: 2 }],
           availability: {
-            startDate: "2026-02-01",
-            endDate: "2026-01-01",
+            startDate: '2026-02-01',
+            endDate: '2026-01-01',
           },
         },
         session: {
@@ -178,7 +178,7 @@ describe("applicationsController", () => {
 
       await expect(applicationsController.submitApplication(req, res))
         .rejects.toMatchObject({
-          message: "Validation failed",
+          message: 'Validation failed',
           statusCode: 400,
         });
 
@@ -186,7 +186,7 @@ describe("applicationsController", () => {
     });
   });
 
-  test("getApplicationStatus: uses session user id and returns 200", async () => {
+  test('getApplicationStatus: uses session user id and returns 200', async () => {
     /**
      * Success:
      * - session contains an authenticated user id
@@ -211,7 +211,7 @@ describe("applicationsController", () => {
     expect(res.json).toHaveBeenCalledWith({ hasApplication: true });
   });
 
-  test("deleteApplication: delegates to service and returns 204", async () => {
+  test('deleteApplication: delegates to service and returns 204', async () => {
     /**
      * Success:
      * - session contains an authenticated user id

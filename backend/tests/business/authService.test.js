@@ -7,12 +7,12 @@
  * - login(): null vs DTO based on lookup + password check, error mapping
  */
 
-jest.mock("bcrypt", () => ({
+jest.mock('bcrypt', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
 }));
 
-jest.mock("../../models", () => ({
+jest.mock('../../models', () => ({
   sequelize: {
     transaction: jest.fn(),
   },
@@ -26,24 +26,22 @@ const mockUserDAO = {
   findByUsername: jest.fn(),
 };
 
-jest.mock("../../src/integration/UserDAO", () => {
-  return jest.fn().mockImplementation(() => mockUserDAO);
-});
+jest.mock('../../src/integration/UserDAO', () => jest.fn().mockImplementation(() => mockUserDAO));
 
-const bcrypt = require("bcrypt");
-const { sequelize } = require("../../models");
-const { AppError, ValidationError } = require("../../src/business/errors/AppError");
-const authService = require("../../src/business/authService");
+const bcrypt = require('bcrypt');
+const { sequelize } = require('../../models');
+const { AppError, ValidationError } = require('../../src/business/errors/AppError');
+const authService = require('../../src/business/authService');
 
-describe("authService.register", () => {
+describe('authService.register', () => {
   /** Input payload for register() */
   const input = {
-    name: "Anna",
-    surname: "Bengtsson",
-    email: "anna@bengtsson.se",
-    pnr: "20000101-1234",
-    username: "anna",
-    password: "password123",
+    name: 'Anna',
+    surname: 'Bengtsson',
+    email: 'anna@bengtsson.se',
+    pnr: '20000101-1234',
+    username: 'anna',
+    password: 'password123',
   };
 
   beforeEach(() => {
@@ -62,11 +60,11 @@ describe("authService.register", () => {
     mockUserDAO.pnrExists.mockResolvedValue(false);
 
     /** Default: hashing and creation succeed. */
-    bcrypt.hash.mockResolvedValue("$bcryptHash");
+    bcrypt.hash.mockResolvedValue('$bcryptHash');
     mockUserDAO.createApplicant.mockResolvedValue({ personId: 14, username: input.username });
   });
 
-  test("success: creates applicant and returns id+username", async () => {
+  test('success: creates applicant and returns id+username', async () => {
     /**
      * Success:
      * - uniqueness checks are all false
@@ -94,15 +92,15 @@ describe("authService.register", () => {
         email: input.email,
         pnr: input.pnr,
         username: input.username,
-        passwordHash: "$bcryptHash",
+        passwordHash: '$bcryptHash',
       },
-      expect.anything()
+      expect.anything(),
     );
 
-    expect(res).toEqual({ id: 14, username: "anna" });
+    expect(res).toEqual({ id: 14, username: 'anna' });
   });
 
-  test("fails with ValidationError when username already exists", async () => {
+  test('fails with ValidationError when username already exists', async () => {
     /**
      * Validation:
      * - usernameExists returns true
@@ -111,18 +109,18 @@ describe("authService.register", () => {
      */
     mockUserDAO.usernameExists.mockResolvedValue(true);
 
-    const err = await authService.register(input).catch(e => e);
+    const err = await authService.register(input).catch((e) => e);
     expect(err).toBeInstanceOf(ValidationError);
-    expect(err).toMatchObject({ 
-        message: "Username already exists", 
-        statusCode: 409 
+    expect(err).toMatchObject({
+      message: 'Username already exists',
+      statusCode: 409,
     });
 
     expect(bcrypt.hash).not.toHaveBeenCalled();
     expect(mockUserDAO.createApplicant).not.toHaveBeenCalled();
   });
 
-  test("fails with ValidationError when email already exists", async () => {
+  test('fails with ValidationError when email already exists', async () => {
     /**
      * Validation:
      * - emailExists returns true
@@ -131,18 +129,18 @@ describe("authService.register", () => {
      */
     mockUserDAO.emailExists.mockResolvedValue(true);
 
-    const err = await authService.register(input).catch(e => e);
+    const err = await authService.register(input).catch((e) => e);
     expect(err).toBeInstanceOf(ValidationError);
-    expect(err).toMatchObject({ 
-        message: "Email already exists", 
-        statusCode: 409 
+    expect(err).toMatchObject({
+      message: 'Email already exists',
+      statusCode: 409,
     });
 
     expect(bcrypt.hash).not.toHaveBeenCalled();
     expect(mockUserDAO.createApplicant).not.toHaveBeenCalled();
   });
 
-  test("fails with ValidationError when pnr already exists", async () => {
+  test('fails with ValidationError when pnr already exists', async () => {
     /**
      * Validation:
      * - pnrExists returns true
@@ -151,57 +149,57 @@ describe("authService.register", () => {
      */
     mockUserDAO.pnrExists.mockResolvedValue(true);
 
-    const err = await authService.register(input).catch(e => e);
+    const err = await authService.register(input).catch((e) => e);
     expect(err).toBeInstanceOf(ValidationError);
-    expect(err).toMatchObject({ 
-        message: "Personal number already exists", 
-        statusCode: 409 
+    expect(err).toMatchObject({
+      message: 'Personal number already exists',
+      statusCode: 409,
     });
 
     expect(bcrypt.hash).not.toHaveBeenCalled();
     expect(mockUserDAO.createApplicant).not.toHaveBeenCalled();
   });
 
-  test("wraps unexpected errors into AppError(500)", async () => {
+  test('wraps unexpected errors into AppError(500)', async () => {
     /**
      * Error wrapping:
      * - DAO throws a regular Error
      * - service should wrap it into AppError(500) with message "Registration failed"
      */
-    mockUserDAO.createApplicant.mockRejectedValue(new Error("DB down"));
+    mockUserDAO.createApplicant.mockRejectedValue(new Error('DB down'));
 
-    const err = await authService.register(input).catch(e => e);
+    const err = await authService.register(input).catch((e) => e);
     expect(err).toBeInstanceOf(AppError);
-    expect(err).toMatchObject({ 
-        message: "Registration failed", 
-        statusCode: 500 
+    expect(err).toMatchObject({
+      message: 'Registration failed',
+      statusCode: 500,
     });
   });
 
-  test("if transaction itself fails, we also wrap into AppError(500)", async () => {
+  test('if transaction itself fails, we also wrap into AppError(500)', async () => {
     /**
      * Transaction failure:
      * - transaction rejects before the callback completes
      * - service should wrap into AppError(500)
      */
-    sequelize.transaction.mockRejectedValue(new Error("transaction fail"));
+    sequelize.transaction.mockRejectedValue(new Error('transaction fail'));
 
-    const err = await authService.register(input).catch(e => e);
+    const err = await authService.register(input).catch((e) => e);
     expect(err).toBeInstanceOf(AppError);
-    expect(err).toMatchObject({ 
-        message: "Registration failed", 
-        statusCode: 500 
+    expect(err).toMatchObject({
+      message: 'Registration failed',
+      statusCode: 500,
     });
   });
 });
 
-describe("authService.login", () => {
+describe('authService.login', () => {
   beforeEach(() => {
     /** Clear mock call history between login tests. */
     jest.clearAllMocks();
   });
 
-  test("returns null when user not found", async () => {
+  test('returns null when user not found', async () => {
     /**
      * Not found:
      * - DAO returns null
@@ -209,12 +207,12 @@ describe("authService.login", () => {
      */
     mockUserDAO.findByUsername.mockResolvedValue(null);
 
-    const res = await authService.login("nope", "pw");
+    const res = await authService.login('nope', 'pw');
     expect(res).toBeNull();
     expect(bcrypt.compare).not.toHaveBeenCalled();
   });
 
-  test("returns null when password mismatch", async () => {
+  test('returns null when password mismatch', async () => {
     /**
      * Password mismatch:
      * - user exists
@@ -223,17 +221,17 @@ describe("authService.login", () => {
      */
     mockUserDAO.findByUsername.mockResolvedValue({
       id: 1,
-      username: "anna",
-      passwordHash: "$hash",
-      role: "applicant",
+      username: 'anna',
+      passwordHash: '$hash',
+      role: 'applicant',
     });
     bcrypt.compare.mockResolvedValue(false);
 
-    const res = await authService.login("anna", "wrong");
+    const res = await authService.login('anna', 'wrong');
     expect(res).toBeNull();
   });
 
-  test("success returns user DTO when password matches", async () => {
+  test('success returns user DTO when password matches', async () => {
     /**
      * Success:
      * - user exists
@@ -242,30 +240,30 @@ describe("authService.login", () => {
      */
     mockUserDAO.findByUsername.mockResolvedValue({
       id: 1,
-      username: "anna",
-      passwordHash: "$hash",
-      role: "applicant",
+      username: 'anna',
+      passwordHash: '$hash',
+      role: 'applicant',
     });
     bcrypt.compare.mockResolvedValue(true);
 
-    const res = await authService.login("anna", "password123");
-    expect(bcrypt.compare).toHaveBeenCalledWith("password123", "$hash");
-    expect(res).toEqual({ id: 1, username: "anna", role: "applicant" });
+    const res = await authService.login('anna', 'password123');
+    expect(bcrypt.compare).toHaveBeenCalledWith('password123', '$hash');
+    expect(res).toEqual({ id: 1, username: 'anna', role: 'applicant' });
   });
 
-  test("wraps unexpected errors into AppError(500)", async () => {
+  test('wraps unexpected errors into AppError(500)', async () => {
     /**
      * Error wrapping:
      * - DAO throws a regular Error
      * - service wraps into AppError(500) with message "Authentication failed"
      */
-    mockUserDAO.findByUsername.mockRejectedValue(new Error("DB error"));
+    mockUserDAO.findByUsername.mockRejectedValue(new Error('DB error'));
 
-    const err = await authService.login("anna", "pw").catch(e => e);
+    const err = await authService.login('anna', 'pw').catch((e) => e);
     expect(err).toBeInstanceOf(AppError);
-    expect(err).toMatchObject({ 
-        message: "Authentication failed", 
-        statusCode: 500 
+    expect(err).toMatchObject({
+      message: 'Authentication failed',
+      statusCode: 500,
     });
   });
 });
