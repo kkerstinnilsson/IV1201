@@ -5,7 +5,6 @@ const {
   Availability,
   Competence,
   CompetenceProfile,
-  Person,
 } = require('../../models');
 
 const {
@@ -53,8 +52,12 @@ describe('RecruitementDAO', () => {
       const result = await dao.getAllApplicants();
 
       expect(result).toEqual([
-        { id: 1, firstName: 'John', lastName: 'Doe', status: 'submitted' },
-        { id: 2, firstName: 'Jane', lastName: 'Smith', status: 'accepted' },
+        {
+          id: 1, firstName: 'John', lastName: 'Doe', status: 'submitted',
+        },
+        {
+          id: 2, firstName: 'Jane', lastName: 'Smith', status: 'accepted',
+        },
       ]);
 
       expect(Application.findAll).toHaveBeenCalledWith(expect.objectContaining({

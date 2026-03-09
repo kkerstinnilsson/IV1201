@@ -1,4 +1,3 @@
-
 const UserDAO = require('../../src/integration/UserDAO');
 const { Credentials, Person } = require('../../models');
 const { DatabaseError, ValidationError } = require('../../src/business/errors/AppError');
@@ -24,7 +23,6 @@ describe('UserDAO', () => {
     jest.clearAllMocks();
     dao = new UserDAO();
   });
-
 
   describe('findByUsername', () => {
     it('returns mapped user with role', async () => {
@@ -96,7 +94,6 @@ describe('UserDAO', () => {
     });
   });
 
-
   describe('usernameExists', () => {
     it('returns true if username exists', async () => {
       Credentials.findOne.mockResolvedValue({ credential_id: 1 });
@@ -130,7 +127,6 @@ describe('UserDAO', () => {
       await expect(dao.usernameExists('john')).rejects.toThrow(DatabaseError);
     });
   });
-
 
   describe('emailExists', () => {
     it('returns true if email exists', async () => {
@@ -166,7 +162,6 @@ describe('UserDAO', () => {
     });
   });
 
-
   describe('pnrExists', () => {
     it('returns true if pnr exists', async () => {
       Person.findOne.mockResolvedValue({ person_id: 1 });
@@ -201,7 +196,6 @@ describe('UserDAO', () => {
     });
   });
 
-
   describe('createCredentialsForPerson', () => {
     it('creates credentials', async () => {
       Credentials.create.mockResolvedValue({});
@@ -228,7 +222,6 @@ describe('UserDAO', () => {
       ).rejects.toThrow(DatabaseError);
     });
   });
-
 
   describe('createApplicant', () => {
     const validData = {
@@ -280,7 +273,6 @@ describe('UserDAO', () => {
     });
   });
 
-
   describe('deleteCredentialsByUsername', () => {
     it('deletes credentials', async () => {
       Credentials.destroy.mockResolvedValue(1);
@@ -300,7 +292,6 @@ describe('UserDAO', () => {
       ).rejects.toThrow(DatabaseError);
     });
   });
-
 
   describe('deleteAccountByUsername', () => {
     it('deletes credentials and person', async () => {
@@ -333,4 +324,3 @@ describe('UserDAO', () => {
     });
   });
 });
-
