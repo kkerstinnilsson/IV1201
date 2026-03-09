@@ -24,7 +24,7 @@ const BCRYPT_ROUNDS = 12;
  * @param {{name:string, surname:string, email:string, pnr:string, username:string,
  * password:string}} data
  * @returns {Promise<{id:number, username:string}>}
- * @throws {Error} 
+ * @throws {Error}
  */
 async function register(data) {
   const {

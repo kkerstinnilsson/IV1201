@@ -24,8 +24,6 @@ const {
  * Database logic for applicants and applications
  */
 class RecruitementDAO {
-  constructor() {
-  }
 
   /**
    * Retrieves all applications for the recruiter view

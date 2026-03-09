@@ -19,7 +19,6 @@ const {
  * Fetch all applications
  */
 async function listApplications(req, res) {
-
   const applications = await applicationsService.getAllApplications();
   return res.status(200).json(applications);
 }
@@ -30,7 +29,6 @@ async function listApplications(req, res) {
  * Expected body: { expertiseList: [...], availability: { startDate, endDate } }
  */
 async function submitApplication(req, res) {
-
   const { expertiseList, availability } = req.body ?? {};
   const userId = req.session.user.id;
 
