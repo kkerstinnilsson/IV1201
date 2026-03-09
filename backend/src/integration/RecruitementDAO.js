@@ -7,10 +7,17 @@
  */
 
 const {
+  DatabaseError,
+  ValidationError,
+} = require('../business/errors/AppError');
+
+const {
   Person, Application, Availability, Competence, CompetenceProfile,
 } = require('../../models');
 
-const { validateInteger, validateDecimal, validateString, validateDateStr } = require('./utils/validateIntegration');
+const {
+  validateInteger, validateDecimal, validateString, validateDateStr,
+} = require('./utils/validateIntegration');
 
 /**
  * Class representing the RecruitementDAO
@@ -30,6 +37,7 @@ class RecruitementDAO {
    * @throws {DatabaseError} If a database error occurs
    */
   async getAllApplicants(t = null) {
+    try {
       const rows = await Application.findAll({
         attributes: ['status'],
         include: [{
@@ -47,6 +55,9 @@ class RecruitementDAO {
         lastName: r.Person.surname,
         status: r.status,
       }));
+    } catch (error) {
+      throw new DatabaseError('Failed to fetch applicants', error);
+    }
   }
 
   /**
@@ -56,18 +67,24 @@ class RecruitementDAO {
    * @param {number} personId - ID of the applicant
    * @param {Object} t - The required transaction object
    * @returns {Promise<Object>} The created application instance
+   * @throws {ValidationError} If personId is not a valid integer
    * @throws {DatabaseError} If a database error occurs
    */
   async createApplication(personId, t) {
-    // validating correct data format
-    validateInteger(personId, 'personId'); 
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
     if (!t) {
       throw new Error('A transaction is required to create an application row!');
     }
+    try {
       return await Application.create(
         { person_id: personId },
         { transaction: t },
       );
+    } catch (error) {
+      throw new DatabaseError('Failed to create application', error);
+    }
   }
 
   /**
@@ -78,17 +95,23 @@ class RecruitementDAO {
    * @param {Object} availability - Object containing startDate and endDate
    * @param {Object} t - The required transaction object
    * @returns {Promise<Object>} The created availability record
+   * @throws {ValidationError} If any field fails validation
    * @throws {DatabaseError} If a database error occurs
    */
   async createAvailability(personId, { startDate, endDate }, t) {
-    // validating correct data format
-    validateInteger(personId, 'personId');
-    validateDateStr(startDate, 'startDate');
-    validateDateStr(endDate, 'endDate');
-
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
+    if (!validateDateStr(startDate)) {
+      throw new ValidationError('Integration layer: startDate must be a valid date (YYYY-MM-DD)');
+    }
+    if (!validateDateStr(endDate)) {
+      throw new ValidationError('Integration layer: endDate must be a valid date (YYYY-MM-DD)');
+    }
     if (!t) {
       throw new Error('A transaction is required to create availability records!');
     }
+    try {
       return await Availability.create(
         {
           person_id: personId,
@@ -97,6 +120,9 @@ class RecruitementDAO {
         },
         { transaction: t },
       );
+    } catch (error) {
+      throw new DatabaseError('Failed to create availability', error);
+    }
   }
 
   /**
@@ -107,16 +133,23 @@ class RecruitementDAO {
    * @param {number} years - Years of experience
    * @param {Object} t - The required transaction object
    * @returns {Promise<Object>} The created competence profile instance
+   * @throws {ValidationError} If any field fails validation
    * @throws {DatabaseError} If a database error occurs
    */
   async createCompetenceProfile(personId, competenceId, years, t) {
-    // validating correct data format
-    validateInteger(personId, 'personId');
-    validateInteger(competenceId, 'competenceId');
-    validateDecimal(years, 'yearsOfExperience');
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
+    if (!validateInteger(competenceId)) {
+      throw new ValidationError('Integration layer: competenceId must be a valid integer');
+    }
+    if (!validateDecimal(years)) {
+      throw new ValidationError('Integration layer: yearsOfExperience must be a valid numeric value');
+    }
     if (!t) {
       throw new Error('A transaction is required to create a competence profile!');
     }
+    try {
       return await CompetenceProfile.create(
         {
           person_id: personId,
@@ -125,6 +158,9 @@ class RecruitementDAO {
         },
         { transaction: t },
       );
+    } catch (error) {
+      throw new DatabaseError('Failed to create competence profile', error);
+    }
   }
 
   /**
@@ -133,18 +169,23 @@ class RecruitementDAO {
    * @param {string} name - The name of the competence
    * @param {Object} [t=null] - Optional transaction reference
    * @returns {Promise<number|null>} The competence_id if found, otherwise null
+   * @throws {ValidationError} If name is not a valid string
    * @throws {DatabaseError} If a database error occurs
    */
   async getCompetenceIdByName(name, t = null) {
-     // validating correct data format
-     validateString(name, 'competenceName');
-
+    if (!validateString(name)) {
+      throw new ValidationError('Integration layer: competenceName must be a non-empty string');
+    }
+    try {
       const competence = await Competence.findOne({
         where: { name },
         attributes: ['competence_id'],
         transaction: t || undefined,
       });
       return competence ? competence.competence_id : null;
+    } catch (error) {
+      throw new DatabaseError('Failed to fetch competence by name', error);
+    }
   }
 
   /**
@@ -153,12 +194,14 @@ class RecruitementDAO {
    * @param {number} personId - ID of the person to check
    * @param {Object} [t=null] - Optional transaction reference
    * @returns {Promise<boolean>} True if any application related data exists
+   * @throws {ValidationError} If personId is not a valid integer
    * @throws {DatabaseError} If a database error occurs
    */
   async hasApplication(personId, t = null) {
-     // validating correct data format
-     validateInteger(personId, 'personId');
-
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
+    try {
       const appl = await Application.findOne({
         where: { person_id: personId },
         attributes: ['application_id'],
@@ -179,6 +222,9 @@ class RecruitementDAO {
         transaction: t || undefined,
       });
       return competence !== null;
+    } catch (error) {
+      throw new DatabaseError('Failed to check application existence', error);
+    }
   }
 
   /**
@@ -187,18 +233,23 @@ class RecruitementDAO {
    * @param {number} personId - ID of the person
    * @param {Object} t - The required transaction object
    * @returns {Promise<number>} Number of application rows deleted
+   * @throws {ValidationError} If personId is not a valid integer
    * @throws {DatabaseError} If a database error occurs
    */
   async deleteApplication(personId, t) {
-    // validating correct data format
-    validateInteger(personId, 'personId');
-
+    if (!validateInteger(personId)) {
+      throw new ValidationError('Integration layer: personId must be a valid integer');
+    }
     if (!t) {
       throw new Error('A transaction is required to delete an application!');
     }
+    try {
       await CompetenceProfile.destroy({ where: { person_id: personId }, transaction: t });
       await Availability.destroy({ where: { person_id: personId }, transaction: t });
       return await Application.destroy({ where: { person_id: personId }, transaction: t });
+    } catch (error) {
+      throw new DatabaseError('Failed to delete application', error);
+    }
   }
 }
 
