@@ -20,12 +20,11 @@ const BCRYPT_ROUNDS = 12;
  * Registers a new applicant account.
  * - Ensures username, email and pnr are unique
  * - Hashes the plaintext password using bcrypt
- * - Delegates persistence (Person + Credentials) to DAO
  *
  * @param {{name:string, surname:string, email:string, pnr:string, username:string,
  * password:string}} data
  * @returns {Promise<{id:number, username:string}>}
- * @throws {Error} With code USERNAME_TAKEN / EMAIL_TAKEN / PNR_TAKEN if duplicates exist.
+ * @throws {Error}
  */
 async function register(data) {
   const {

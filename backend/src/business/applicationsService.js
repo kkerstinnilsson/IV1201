@@ -20,7 +20,6 @@ const {
  * @returns {Promise<Array>} List of applicants
  */
 async function getAllApplications() {
-  console.log('applicationsService: getAllApplications called');
   try {
     return await dao.getAllApplicants();
   } catch (error) {
@@ -37,7 +36,6 @@ async function getAllApplications() {
  * @param {Array} availabilityList - List of { startDate, endDate }
  */
 async function submitApplication(userId, expertiseList, availabilityList) {
-  console.log('applicationsService: submitApplication called');
   try {
     return await sequelize.transaction(async (t) => {
       const alreadyExists = await dao.hasApplication(userId, t);
@@ -74,7 +72,6 @@ async function submitApplication(userId, expertiseList, availabilityList) {
  * @returns {Promise<{hasApplication: boolean}>}
  */
 async function getApplicationStatus(userId) {
-  console.log('applicationsService: getApplicationStatus called');
   try {
     const hasApplication = await dao.hasApplication(userId);
     return { hasApplication };
@@ -90,7 +87,6 @@ async function getApplicationStatus(userId) {
  * @returns {Promise<void>}
  */
 async function deleteApplication(userId) {
-  console.log('applicationsService: deleteApplication called');
   try {
     return await sequelize.transaction(async (t) => {
       const exists = await dao.hasApplication(userId, t);

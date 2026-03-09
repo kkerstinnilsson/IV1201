@@ -24,10 +24,6 @@ const {
  * Database logic for applicants and applications
  */
 class RecruitementDAO {
-  constructor() {
-    console.log(' RecruitementDAO: Initialized with Sequelize');
-  }
-
   /**
    * Retrieves all applications for the recruiter view
    * Joins with the Person model to get names and filters by applicant role
